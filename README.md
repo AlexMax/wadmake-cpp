@@ -22,7 +22,7 @@ Q: Why Lua?
 A: A build system should be extensible, and I did not want to invent a new extension language from scratch.  In addition to its small size and ubiquity as an extension language, Lua seemed like a natrual fit as it originated as a configuration language and has been used in other build systems like Premake.
 
 Q: Why C?
-A: C89 is portable, has libraries for damn-near everything, and allows easy creation of small native executables without bundling a runtime.  The only other language in the same ballpack is C++ and I would prefer to avoid that nest of vipers if at all possible.
+A: C is portable, has libraries for damn-near everything, and allows easy creation of small native executables without bundling a runtime.  The only other language in the same ballpack is C++ and I would prefer to avoid that nest of vipers if at all possible.
 
 Contributing
 ============
@@ -31,6 +31,11 @@ Contributions are welcome.  Here are the project's standards:
 
 - Use 1TBS brace style.
 - Indent with tabs, align with spaces.
+- Use CamelCase with an initial uppercase for identifiers that have a scope greater than a single translation unit.
+- Use camelCase with an initial lowercase for identifiers with a scope of a single translation unit.
+- Use lowercase_with_underscores for identifiers with block scope.
+- A function that operates on a struct can be prefixed with the name of the type followed by an underscore.
+- Enumeration elements are always UPPERCASE_WITH_UNDERSCORES.
 - Your code should not generate compiler warnings.
 - Please use a tool that checks for undefined behavior and memory leaks, such as Address Sanitizer, Valgrind or Dr. Memory.
 - Keep in mind that all libraries are to be statically-linked into the executable on Windows.  No outside .dll files allowed.
