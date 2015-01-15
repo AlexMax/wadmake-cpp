@@ -9,47 +9,50 @@ const char WadTypeIdentifiers[][4] = {
 	{'P', 'W', 'A', 'D'}
 };
 
-Lumps* Lumps_Construct() {
-	Lumps* lumps = malloc(sizeof(Lumps));
+Error Lumps_Construct(Lumps* lumps) {
+	lumps = malloc(sizeof(Lumps));
 	if (lumps == NULL) {
-		return NULL;
+		return ERR_ALLOC;
 	}
 
-	lumps->lumps = NULL;	
+	lumps->lumps = NULL;
 	lumps->lumps_size = 0;
 
-	return lumps;
+	return SUCCESS;
 }
 
 void Lumps_Destruct(Lumps* lumps) {
 	free(lumps);
 }
 
-Wad* Wad_Construct(const WadType wad_type) {
-	Wad* wad = malloc(sizeof(Wad));
+Error Wad_Construct(const WadType wad_type, Wad* wad) {
+	Error error;
+
+	wad = malloc(sizeof(Wad));
 	if (wad == NULL) {
-		return NULL;
+		return ERR_ALLOC;
 	}
 
 	wad->type = wad_type;
-	wad->filesystem = Lumps_Construct();
-	if (wad->filesystem == NULL) {
+	if ((error = Lumps_Construct(wad->filesystem)) != SUCCESS) {
 		free(wad);
-		return NULL;
+		return error;
 	}
 
-	return wad;
+	return SUCCESS;
 }
 
-Wad* Wad_ConstructFromBuffer(const char* buffer, size_t size) {
+Error Wad_ConstructFromBuffer(const char* buffer, const size_t size, Wad* wad) {
+	Error error;
+
 	if (size < 12) {
 		// Buffer too small
-		return NULL;
+		return ERR_WADPARSE;
 	}
 
-	Wad* wad = malloc(sizeof(Wad));
+	wad = malloc(sizeof(Wad));
 	if (wad == NULL) {
-		return NULL;
+		return ERR_ALLOC;
 	}
 
 	// Determine if it's an IWAD or a PWAD
@@ -62,7 +65,7 @@ Wad* Wad_ConstructFromBuffer(const char* buffer, size_t size) {
 	if (wad->type == WADTYPE_NULL) {
 		// Invalid WAD identifier
 		free(wad);
-		return NULL;
+		return ERR_WADPARSE;
 	}
 
 	int32_t numlumps;
@@ -70,7 +73,7 @@ Wad* Wad_ConstructFromBuffer(const char* buffer, size_t size) {
 	if (numlumps < 0) {
 		// Lump count wraparound
 		free(wad);
-		return NULL;
+		return ERR_WADPARSE;
 	}
 
 	// Find WAD directory
@@ -79,14 +82,13 @@ Wad* Wad_ConstructFromBuffer(const char* buffer, size_t size) {
 	if (infotablefs + (numlumps * 16) > size) {
 		// Incomplete infotable
 		free(wad);
-		return NULL;
+		return ERR_WADPARSE;
 	}
 	const char* infotable = buffer + infotablefs;
 
-	wad->filesystem = Lumps_Construct();
-	if (wad->filesystem == NULL) {
+	if ((error = Lumps_Construct(wad->filesystem)) != SUCCESS) {
 		free(wad);
-		return NULL;
+		return error;
 	}
 
 	for (int i = 0;i < numlumps;i++) {
@@ -100,7 +102,7 @@ Wad* Wad_ConstructFromBuffer(const char* buffer, size_t size) {
 		printf("name: %s\n", name);
 	}
 
-	return wad;
+	return SUCCESS;
 }
 
 void Wad_Destruct(Wad* wad) {

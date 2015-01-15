@@ -4,8 +4,10 @@
 typedef enum {
 	SUCCESS,
 	ERR_ALLOC,
-	ERR_UNKNOWN,
+	ERR_WADPARSE,
 	ERR_MAX
 } Error;
+
+extern const char* ErrorStrings[];
 
 #endif

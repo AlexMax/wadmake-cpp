@@ -28,7 +28,7 @@ void CFatalError(const char* error) {
 	exit(EXIT_FAILURE);
 }
 
-int main(int argc, char** argv) {
+int main() {
 	const char* filename = "wadmakefile";
 
 	Lua = luaL_newstate();

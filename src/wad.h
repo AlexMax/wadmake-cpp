@@ -30,10 +30,10 @@ typedef struct {
 	WadType type;
 } Wad;
 
-extern Lumps* Lumps_Construct();
+extern Error Lumps_Construct(Lumps* lumps);
 extern void Lumps_Destruct(Lumps* lumps);
-extern Wad* Wad_Construct(const WadType wad_type);
-extern Wad* Wad_ConstructFromBuffer(const char* buffer, size_t size);
+extern Error Wad_Construct(const WadType wad_type, Wad* wad);
+extern Error Wad_ConstructFromBuffer(const char* buffer, const size_t size, Wad* wad);
 extern void Wad_Destruct(Wad* wad);
 
 #endif
