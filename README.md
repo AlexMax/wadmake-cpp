@@ -1,10 +1,10 @@
 WADmake
--------
+=======
 
 A utility for creating WAD, ZIP (PK3) and 7Z (PK7) archives for Doom.
 
 FAQ
-===
+---
 
 Q: Why?
 
@@ -31,7 +31,7 @@ Q: Why C?
 A: C is portable, has libraries for damn-near everything, and allows easy creation of small native executables without bundling a runtime.  The only other language in the same ballpack is C++ and I would prefer to avoid that nest of vipers if at all possible.
 
 Contributing
-============
+------------
 
 Contributions are welcome.  Here are the project's standards:
 
@@ -45,3 +45,8 @@ Contributions are welcome.  Here are the project's standards:
 - Your code should not generate compiler warnings.
 - Please use a tool that checks for undefined behavior and memory leaks, such as Address Sanitizer, Valgrind or Dr. Memory.
 - Keep in mind that all libraries are to be statically-linked into the executable on Windows.  No outside .dll files allowed.
+
+License
+-------
+
+Currently [GNU GPLv3](http://www.gnu.org/licenses/gpl.html).  If there is a compelling case to be made for a more permissive license, I am open to suggestions.
