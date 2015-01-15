@@ -6,12 +6,9 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include "error.h"
+#include "wad.h"
 #include "init.lua.h"
-
-typedef enum {
-	OK,
-	ERROR
-} error;
 
 lua_State* Lua;
 
@@ -31,7 +28,7 @@ void CFatalError(const char* error) {
 	exit(EXIT_FAILURE);
 }
 
-int main(int argc, char* argv) {
+int main(int argc, char** argv) {
 	const char* filename = "wadmakefile";
 
 	Lua = luaL_newstate();
@@ -39,7 +36,7 @@ int main(int argc, char* argv) {
 	luaL_requiref(Lua, LUA_LOADLIBNAME, luaopen_package, 1);
 	lua_pop(Lua, 1);
 
-	if (luaL_loadbuffer(Lua, src_lua_init_lua, src_lua_init_lua_len, "init") != LUA_OK) {
+	if (luaL_loadbuffer(Lua, (char*)src_lua_init_lua, src_lua_init_lua_len, "init") != LUA_OK) {
 		FatalError(bformat("internal lua error\n%s", lua_tostring(Lua, -1)));
 	}
 

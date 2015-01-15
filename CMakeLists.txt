@@ -7,8 +7,8 @@ include_directories("lib/bstring-1.0.0/bstring")
 include_directories("lib/lua-5.3.0/src")
 
 # Sources
-set(WADMAKE_SOURCES src/wadmake.c)
-set(WADMAKE_HEADERS "")
+set(WADMAKE_SOURCES src/wad.c src/wadmake.c)
+set(WADMAKE_HEADERS src/error.h src/wad.h)
 set(WADMAKE_LUA_SOURCES src/lua/init.lua)
 
 # Compile Lua sources into the binary
@@ -28,3 +28,4 @@ endforeach()
 
 add_executable(wadmake ${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
 target_link_libraries(wadmake bstring lua53)
+set_target_properties(wadmake PROPERTIES COMPILE_FLAGS "-Wall -Wextra -std=c99")
