@@ -7,7 +7,9 @@ set(LUA_LIB src/lauxlib.c src/lbaselib.c src/lbitlib.c src/lcorolib.c
             src/ldblib.c src/liolib.c src/lmathlib.c src/loslib.c
             src/lstrlib.c src/ltablib.c src/lutf8lib.c src/loadlib.c
             src/linit.c)
+
 set(LUA_SOURCES ${LUA_CORE} ${LUA_LIB})
+set_source_files_properties(${LUA_SOURCES} PROPERTIES LANGUAGE CXX)
 
 add_library(lua53 STATIC ${LUA_SOURCES})
 target_link_libraries(lua53 m)

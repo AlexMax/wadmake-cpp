@@ -16,9 +16,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const char* ErrorStrings[] = {
-	"",
-	"Allocation failure",
-	"Could not parse WAD data",
-	NULL
-}
+#ifndef LUA_HH
+#define LUA_HH
+
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+
+class LuaState {
+	std::unique_ptr<lua_State, decltype(&lua_close)> lua;
+public:
+	LuaState() : lua(luaL_newstate(), lua_close) { }
+	operator lua_State*() {
+		return this->lua.get();
+	}
+};
+
+#endif

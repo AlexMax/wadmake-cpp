@@ -16,16 +16,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ERROR_H
-#define ERROR_H
+#ifndef WAD_HH
+#define WAD_HH
 
-typedef enum {
-	SUCCESS,
-	ERR_ALLOC,
-	ERR_WADPARSE,
-	ERR_MAX
-} Error;
+#include <sstream>
+#include <string>
+#include <vector>
 
-extern const char* ErrorStrings[];
+class Lump {
+	std::string name;
+	std::stringstream data;
+};
+
+class Directory {
+	std::vector<Lump> index;
+};
+
+class Wad {
+	Directory lumps;
+};
 
 #endif
