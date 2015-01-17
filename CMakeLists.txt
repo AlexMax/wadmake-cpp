@@ -6,7 +6,7 @@ add_subdirectory("lib")
 include_directories("lib/lua-5.3.0/src")
 
 # Sources
-set(WADMAKE_SOURCES src/wad.cc src/wadmake.cc)
+set(WADMAKE_SOURCES src/wad.cc)
 set(WADMAKE_HEADERS src/lua.hh src/wad.hh)
 set(WADMAKE_LUA_SOURCES src/lua/init.lua)
 
@@ -25,6 +25,19 @@ foreach(LUA_SOURCE ${WADMAKE_LUA_SOURCES})
 	list(APPEND WADMAKE_HEADERS ${LUA_SOURCE_FULL_OUTFILE})
 endforeach()
 
-add_executable(wadmake ${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
+# Binary
+add_executable(wadmake src/wadmake.cc
+	${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
 target_link_libraries(wadmake lua53)
 set_target_properties(wadmake PROPERTIES COMPILE_FLAGS "-Wall -Wextra --std=c++11")
+
+# Unit testing
+enable_testing()
+
+include_directories(src)
+add_executable(testwadmake test/testwadmake.cc
+	${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
+target_link_libraries(testwadmake lua53)
+set_target_properties(testwadmake PROPERTIES COMPILE_FLAGS "-Wall -Wextra --std=c++11")
+
+add_test(NAME wadmake COMMAND testwadmake)

@@ -16,35 +16,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef WAD_HH
-#define WAD_HH
+#define CATCH_CONFIG_MAIN
+#include "catch.hh"
 
-#include <sstream>
-#include <string>
-#include <vector>
+#include "wad.hh"
 
-class Lump {
-	std::string name;
-	std::string data;
-public:
-	void setName(std::string& name);
-	void setData(std::vector<char>& data);
-};
-
-class Directory {
-	std::vector<Lump> index;
-public:
-	void push_back(Lump&& lump);
-	size_t size();
-};
-
-class Wad {
-	enum class Type {IWAD, PWAD};
-	Type type;
-	Directory lumps;
-public:
-	Wad(std::istream& buffer);
-	Directory getLumps();
-};
-
-#endif
+TEST_CASE("Wad can construct from buffer", "[wad]") {
+	std::stringstream buffer;
+	std::ifstream moo2d_wad("moo2d.wad", std::fstream::in | std::fstream::binary);
+	Wad moo2d(moo2d_wad);
+	Directory dir = moo2d.getLumps();
+	REQUIRE(dir.size() == 11);
+}
