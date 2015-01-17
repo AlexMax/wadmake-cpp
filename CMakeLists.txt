@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 2.6)
 project(wadmake)
 
+include(CheckCXXCompilerFlag)
+
 add_subdirectory("lib")
+add_subdirectory("tool")
 
 include_directories("lib/lua-5.3.0/src")
 
@@ -25,11 +28,18 @@ foreach(LUA_SOURCE ${WADMAKE_LUA_SOURCES})
 	list(APPEND WADMAKE_HEADERS ${LUA_SOURCE_FULL_OUTFILE})
 endforeach()
 
+# Set compiler-specific flags
+if(MSVC)
+	set(CXXFLAGS "/W4")
+else()
+	set(CXXFLAGS "-Wall -Wextra -std=c++11")
+endif()
+
 # Binary
 add_executable(wadmake src/wadmake.cc
 	${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
 target_link_libraries(wadmake lua53)
-set_target_properties(wadmake PROPERTIES COMPILE_FLAGS "-Wall -Wextra --std=c++11")
+set_target_properties(wadmake PROPERTIES COMPILE_FLAGS ${CXXFLAGS})
 
 # Unit testing
 enable_testing()
@@ -42,6 +52,8 @@ include_directories(src)
 add_executable(testwadmake test/testwadmake.cc
 	${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
 target_link_libraries(testwadmake lua53)
-set_target_properties(testwadmake PROPERTIES COMPILE_FLAGS "-Wall -Wextra --std=c++11")
-
 add_test(NAME wadmake COMMAND testwadmake)
+set_target_properties(testwadmake PROPERTIES COMPILE_FLAGS ${CXXFLAGS})
+
+# Do-nothing target so our Lua files are included in IDE projects
+add_custom_target(wadmake_lua SOURCES ${WADMAKE_LUA_SOURCES})

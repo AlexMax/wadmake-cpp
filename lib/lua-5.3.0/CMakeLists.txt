@@ -12,4 +12,6 @@ set(LUA_SOURCES ${LUA_CORE} ${LUA_LIB})
 set_source_files_properties(${LUA_SOURCES} PROPERTIES LANGUAGE CXX)
 
 add_library(lua53 STATIC ${LUA_SOURCES})
-target_link_libraries(lua53 m)
+if(NOT MSVC)
+	target_link_libraries(lua53 m)
+endif()
