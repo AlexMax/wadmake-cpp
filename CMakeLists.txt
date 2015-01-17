@@ -34,6 +34,10 @@ set_target_properties(wadmake PROPERTIES COMPILE_FLAGS "-Wall -Wextra --std=c++1
 # Unit testing
 enable_testing()
 
+# Files needed for unit testing
+file(DOWNLOAD "http://static.best-ever.org/wads/moo2d.wad" "${CMAKE_BINARY_DIR}/moo2d.wad"
+	EXPECTED_MD5 "2e4635df68da25f78fde58ab179b8c2c")
+
 include_directories(src)
 add_executable(testwadmake test/testwadmake.cc
 	${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
