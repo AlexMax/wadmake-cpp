@@ -17,6 +17,7 @@
  */
 
 #include <cstdint>
+#include <cstring>
 #include <stdexcept>
 
 #include "wad.hh"

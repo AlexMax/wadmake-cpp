@@ -33,8 +33,9 @@ static int wad_create(lua_State* L) {
 		size_t len = 0;
 		const char* buf = lua_tolstring(L, 1, &len);
 		try {
-			std::cout << std::string(buf, len).size() << std::endl;
-			*ptr = new Wad(std::stringstream(std::string(buf, len)));
+			std::stringstream buffer;
+			buffer << std::string(buf, len);
+			*ptr = new Wad(buffer);
 		} catch (std::exception& e) {
 			luaL_error(L, e.what());
 			return 0;
