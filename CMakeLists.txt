@@ -1,16 +1,14 @@
 cmake_minimum_required(VERSION 2.6)
 project(wadmake)
 
-include(CheckCXXCompilerFlag)
-
 add_subdirectory("lib")
 add_subdirectory("tool")
 
 include_directories("lib/lua-5.3.0/src")
 
 # Sources
-set(WADMAKE_SOURCES src/wad.cc)
-set(WADMAKE_HEADERS src/lua.hh src/wad.hh)
+set(WADMAKE_SOURCES src/lwad.cc src/wad.cc)
+set(WADMAKE_HEADERS src/lua.hh src/lwad.hh src/wad.hh)
 set(WADMAKE_LUA_SOURCES src/lua/init.lua)
 
 # Compile Lua sources into the binary
@@ -23,6 +21,7 @@ foreach(LUA_SOURCE ${WADMAKE_LUA_SOURCES})
 	add_custom_command(
 		OUTPUT ${LUA_SOURCE_FULL_OUTFILE}
 		COMMAND xxd -i ${LUA_SOURCE} ${LUA_SOURCE_FULL_OUTFILE}
+		DEPENDS wadmake
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 		COMMENT "Dumping to CXX header ${LUA_SOURCE_OUTFILE}")
 	list(APPEND WADMAKE_HEADERS ${LUA_SOURCE_FULL_OUTFILE})
@@ -55,5 +54,5 @@ target_link_libraries(testwadmake lua53)
 add_test(NAME wadmake COMMAND testwadmake)
 set_target_properties(testwadmake PROPERTIES COMPILE_FLAGS ${CXXFLAGS})
 
-# Do-nothing target so our Lua files are included in IDE projects
+# Target for our .lua files so they'll show up in an IDE
 add_custom_target(wadmake_lua SOURCES ${WADMAKE_LUA_SOURCES})

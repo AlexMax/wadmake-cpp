@@ -37,6 +37,10 @@ void Directory::push_back(Lump&& lump) {
 	this->index.push_back(std::move(lump));
 }
 
+Wad::Wad(Wad::Type type) {
+	this->type = type;
+}
+
 Wad::Wad(std::istream& buffer) {
 	char identifier[4];
 	int32_t numlumps, infotablefs;
@@ -136,6 +140,10 @@ Wad::Wad(std::istream& buffer) {
 
 		this->lumps.push_back(std::move(lump));
 	}
+}
+
+Wad::Type Wad::getType() {
+	return this->type;
 }
 
 Directory Wad::getLumps() {

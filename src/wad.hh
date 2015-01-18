@@ -39,12 +39,15 @@ public:
 };
 
 class Wad {
-	enum class Type {IWAD, PWAD};
+public:
+	enum class Type { IWAD, PWAD };
+	Wad(Wad::Type type);
+	Wad(std::istream& buffer);
+	Wad::Type getType();
+	Directory getLumps();
+private:
 	Type type;
 	Directory lumps;
-public:
-	Wad(std::istream& buffer);
-	Directory getLumps();
 };
 
 #endif
