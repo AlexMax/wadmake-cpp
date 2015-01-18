@@ -24,7 +24,34 @@
 
 #include "wad.hh"
 
+#define META_LUMPS "Lumps"
 #define META_WAD "Wad"
+
+static int lumps_create(lua_State* L) {
+	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
+	*ptr = new Directory();
+	luaL_setmetatable(L, META_LUMPS);
+	return 1;
+}
+
+static int ulumps_gc(lua_State* L) {
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	if (ptr) {
+		delete ptr;
+	}
+	return 0;
+}
+
+static int ulumps_tostring(lua_State* L) {
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	size_t size = ptr->size();
+	if (size == 1) {
+		lua_pushfstring(L, "%d lump", ptr->size());
+	} else {
+		lua_pushfstring(L, "%d lumps", ptr->size());
+	}
+	return 1;
+}
 
 static int wad_create(lua_State* L) {
 	Wad** ptr = (Wad**)lua_newuserdata(L, sizeof(Wad*));
@@ -88,6 +115,12 @@ static int uwad_tostring(lua_State* L) {
 	return 1;
 }
 
+static const luaL_Reg ulumps_functions[] = {
+	{"__gc", ulumps_gc},
+	{"__tostring", ulumps_tostring},
+	{NULL, NULL}
+};
+
 static const luaL_Reg uwad_functions[] = {
 	{"__gc", uwad_gc},
 	{"__tostring", uwad_tostring},
@@ -95,12 +128,20 @@ static const luaL_Reg uwad_functions[] = {
 };
 
 static const luaL_Reg wad_functions[] = {
+	{ "createlumps", lumps_create },
 	{ "createwad", wad_create },
 	{ NULL, NULL }
 };
 
 int luaopen_wad(lua_State* L) {
 	luaL_newlib(L, wad_functions);
+
+	// Create "Lumps" userdata
+	luaL_newmetatable(L, META_LUMPS);
+	lua_pushvalue(L, -1);
+	lua_setfield(L, -2, "__index");
+	luaL_setfuncs(L, ulumps_functions, 0);
+	lua_pop(L, 1);
 
 	// Create "Wad" userdata
 	luaL_newmetatable(L, META_WAD);
