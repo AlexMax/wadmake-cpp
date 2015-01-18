@@ -26,7 +26,7 @@
 #include "wad.hh"
 
 static int wad_create(lua_State* L) {
-	Wad* ptr = (Wad*)lua_newuserdata(L, sizeof(Wad));
+	Wad** ptr = (Wad**)lua_newuserdata(L, sizeof(Wad*));
 
 	if (lua_isstring(L, 1)) {
 		// Passing in a string creates the wad object from a bytestring
@@ -34,14 +34,14 @@ static int wad_create(lua_State* L) {
 		const char* buf = lua_tolstring(L, 1, &len);
 		try {
 			std::cout << std::string(buf, len).size() << std::endl;
-			ptr = new Wad(std::stringstream(std::string(buf, len)));
+			*ptr = new Wad(std::stringstream(std::string(buf, len)));
 		} catch (std::exception& e) {
 			luaL_error(L, e.what());
 			return 0;
 		}
 	} else if (lua_istable(L, 1)) {
 		// Passing in a table of options creates a fresh wad object
-		ptr = new Wad(Wad::Type::IWAD);
+		*ptr = new Wad(Wad::Type::IWAD);
 	} else {
 		luaL_error(L, "missing parameter");
 		return 0;
@@ -52,7 +52,7 @@ static int wad_create(lua_State* L) {
 }
 
 static int uwad_gc(lua_State* L) {
-	Wad* ptr = (Wad*)luaL_checkudata(L, 1, "wad");
+	Wad* ptr = *(Wad**)luaL_checkudata(L, 1, "wad");
 	if (ptr) {
 		delete ptr;
 	}
@@ -60,7 +60,7 @@ static int uwad_gc(lua_State* L) {
 }
 
 static int uwad_tostring(lua_State* L) {
-	Wad* ptr = (Wad*)luaL_checkudata(L, 1, "wad");
+	Wad* ptr = *(Wad**)luaL_checkudata(L, 1, "wad");
 	if (ptr->getType() == Wad::Type::PWAD) {
 		lua_pushfstring(L, "PWAD %p", ptr);
 	} else {
