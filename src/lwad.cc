@@ -25,12 +25,47 @@
 #include "wad.hh"
 
 #define META_LUMPS "Lumps"
-#define META_WAD "Wad"
 
-static int lumps_create(lua_State* L) {
+static int wad_createLumps(lua_State* L) {
 	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
 	*ptr = new Directory();
 	luaL_setmetatable(L, META_LUMPS);
+	return 1;
+}
+
+static int wad_readwad(lua_State* L) {
+	// Read WAD file data into stringstream.
+	size_t len;
+	const char* buffer = luaL_checklstring(L, 1, &len);
+	std::string buffer_string(buffer, len);
+	std::stringstream buffer_stream;
+	buffer_stream << buffer_string;
+
+	// Stream the data into Wad class to get our WAD type and lumps.
+	Wad wad = Wad(buffer_stream);
+
+	// Create a table
+	lua_createtable(L, 0, 2); /* [table] */
+
+	// Store 'type' in table
+	lua_pushstring(L, "type");
+	Wad::Type wad_type = wad.getType();
+	if (wad_type == Wad::Type::IWAD) {
+		lua_pushstring(L, "iwad");
+	} else if (wad_type == Wad::Type::PWAD) {
+		lua_pushstring(L, "pwad");
+	}
+	lua_settable(L, -3);
+
+	// store 'lumps' in table
+	lua_pushstring(L, "lumps");
+	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
+	// [AM] Alternatives that don't require a full copy?
+	*ptr = new Directory(wad.getLumps());
+	luaL_setmetatable(L, META_LUMPS);
+	lua_settable(L, -3);
+
+	// return our table
 	return 1;
 }
 
@@ -46,71 +81,9 @@ static int ulumps_tostring(lua_State* L) {
 	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
 	size_t size = ptr->size();
 	if (size == 1) {
-		lua_pushfstring(L, "%d lump", ptr->size());
+		lua_pushfstring(L, META_LUMPS ": %p, %d lump", ptr, ptr->size());
 	} else {
-		lua_pushfstring(L, "%d lumps", ptr->size());
-	}
-	return 1;
-}
-
-static int wad_create(lua_State* L) {
-	Wad** ptr = (Wad**)lua_newuserdata(L, sizeof(Wad*));
-
-	if (lua_isstring(L, 1)) {
-		// Passing in a string creates the wad object from a bytestring
-		size_t len = 0;
-		const char* buf = lua_tolstring(L, 1, &len);
-		try {
-			std::stringstream buffer;
-			buffer << std::string(buf, len);
-			*ptr = new Wad(buffer);
-		} catch (std::exception& e) {
-			luaL_error(L, e.what());
-			return 0;
-		}
-	} else if (lua_istable(L, 1)) {
-		// Passing in a table of options creates a fresh wad object
-		lua_pushstring(L, "type");
-		if (lua_gettable(L, 1) != LUA_TSTRING) {
-			luaL_error(L, "type is required");
-			return 0;
-		}
-		const char* type = lua_tostring(L, -1);
-		if (std::strcmp(type, "iwad") == 0) {
-			*ptr = new Wad(Wad::Type::IWAD);
-		} else if (std::strcmp(type, "pwad") == 0) {
-			*ptr = new Wad(Wad::Type::PWAD);
-		} else {
-			luaL_error(L, "type must be one of \"iwad\", \"pwad\"");
-			return 0;
-		}
-		lua_pop(L, 1);
-	} else {
-		luaL_error(L, "missing parameter");
-		return 0;
-	}
-
-	luaL_setmetatable(L, META_WAD);
-	return 1;
-}
-
-static int uwad_gc(lua_State* L) {
-	Wad* ptr = *(Wad**)luaL_checkudata(L, 1, META_WAD);
-	if (ptr) {
-		delete ptr;
-	}
-	return 0;
-}
-
-static int uwad_tostring(lua_State* L) {
-	Wad* ptr = *(Wad**)luaL_checkudata(L, 1, META_WAD);
-	if (ptr->getType() == Wad::Type::IWAD) {
-		lua_pushfstring(L, "IWAD %p", ptr);
-	} else if (ptr->getType() == Wad::Type::PWAD) {
-		lua_pushfstring(L, "PWAD %p", ptr);
-	} else {
-		luaL_error(L, "unknown WAD type");
-		return 0;
+		lua_pushfstring(L, META_LUMPS ": %p, %d lumps", ptr, ptr->size());
 	}
 	return 1;
 }
@@ -121,15 +94,9 @@ static const luaL_Reg ulumps_functions[] = {
 	{NULL, NULL}
 };
 
-static const luaL_Reg uwad_functions[] = {
-	{"__gc", uwad_gc},
-	{"__tostring", uwad_tostring},
-	{NULL, NULL}
-};
-
 static const luaL_Reg wad_functions[] = {
-	{ "createlumps", lumps_create },
-	{ "createwad", wad_create },
+	{ "createLumps", wad_createLumps },
+	{ "readwad", wad_readwad },
 	{ NULL, NULL }
 };
 
@@ -141,13 +108,6 @@ int luaopen_wad(lua_State* L) {
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "__index");
 	luaL_setfuncs(L, ulumps_functions, 0);
-	lua_pop(L, 1);
-
-	// Create "Wad" userdata
-	luaL_newmetatable(L, META_WAD);
-	lua_pushvalue(L, -1);
-	lua_setfield(L, -2, "__index");
-	luaL_setfuncs(L, uwad_functions, 0);
 	lua_pop(L, 1);
 
 	return 1;
