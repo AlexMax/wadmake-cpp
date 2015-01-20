@@ -159,6 +159,6 @@ Wad::Type Wad::getType() {
 	return this->type;
 }
 
-Directory Wad::getLumps() {
+const Directory& Wad::getLumps() {
 	return this->lumps;
 }

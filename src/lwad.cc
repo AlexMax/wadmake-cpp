@@ -62,7 +62,6 @@ static int wad_readwad(lua_State* L) {
 	// store 'lumps' in table
 	lua_pushstring(L, "lumps");
 	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
-	// [AM] Alternatives that don't require a full copy?
 	*ptr = new Directory(wad.getLumps());
 	luaL_setmetatable(L, META_LUMPS);
 	lua_settable(L, -3);

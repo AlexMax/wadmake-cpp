@@ -47,7 +47,7 @@ public:
 	Wad(Wad::Type type);
 	Wad(std::istream& buffer);
 	Wad::Type getType();
-	Directory getLumps();
+	const Directory& getLumps();
 private:
 	Type type;
 	Directory lumps;
