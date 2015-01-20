@@ -22,6 +22,14 @@
 
 #include "wad.hh"
 
+const std::string& Lump::getName() {
+	return this->name;
+}
+
+const std::string& Lump::getData() {
+	return this->data;
+}
+
 void Lump::setName(std::string& name) {
 	this->name = name;
 }
@@ -32,6 +40,10 @@ void Lump::setData(std::vector<char>& data) {
 
 size_t Directory::size() {
 	return this->index.size();
+}
+
+Lump Directory::at(size_t n) {
+	return this->index.at(n);
 }
 
 void Directory::push_back(Lump&& lump) {

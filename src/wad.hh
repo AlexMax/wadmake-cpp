@@ -27,6 +27,8 @@ class Lump {
 	std::string name;
 	std::string data;
 public:
+	const std::string& getName();
+	const std::string& getData();
 	void setName(std::string& name);
 	void setData(std::vector<char>& data);
 };
@@ -34,6 +36,7 @@ public:
 class Directory {
 	std::vector<Lump> index;
 public:
+	Lump at(size_t n);
 	void push_back(Lump&& lump);
 	size_t size();
 };

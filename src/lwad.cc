@@ -26,6 +26,7 @@
 
 #define META_LUMPS "Lumps"
 
+// Create an empty Lumps userdata
 static int wad_createLumps(lua_State* L) {
 	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
 	*ptr = new Directory();
@@ -33,6 +34,7 @@ static int wad_createLumps(lua_State* L) {
 	return 1;
 }
 
+// Read WAD file data and return the WAD type and lumps
 static int wad_readwad(lua_State* L) {
 	// Read WAD file data into stringstream.
 	size_t len;
@@ -69,6 +71,7 @@ static int wad_readwad(lua_State* L) {
 	return 1;
 }
 
+// Garbage-collect Lumps
 static int ulumps_gc(lua_State* L) {
 	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
 	if (ptr) {
@@ -77,6 +80,33 @@ static int ulumps_gc(lua_State* L) {
 	return 0;
 }
 
+// Return a specific index out of Lumps (1-indexed)
+static int ulumps_index(lua_State* L) {
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	Lump lump = ptr->at(luaL_checkinteger(L, 2) - 1);
+
+	// Set name (always null-terminated)
+	lua_createtable(L, 0, 2);
+	lua_pushstring(L, "name");
+	lua_pushstring(L, lump.getName().c_str());
+	lua_settable(L, -3);
+
+	// Set data
+	const std::string data = lump.getData();
+	lua_pushstring(L, "data");
+	lua_pushlstring(L, data.data(), data.size());
+	lua_settable(L, -3);
+	return 1;
+}
+
+// Return the length of the Lumps
+static int ulumps_len(lua_State* L) {
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	lua_pushinteger(L, ptr->size());
+	return 1;
+}
+
+// Print Lumps as a string
 static int ulumps_tostring(lua_State* L) {
 	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
 	size_t size = ptr->size();
@@ -88,18 +118,23 @@ static int ulumps_tostring(lua_State* L) {
 	return 1;
 }
 
+// Functions attached to Lumps userdata
 static const luaL_Reg ulumps_functions[] = {
 	{"__gc", ulumps_gc},
+	{"__index", ulumps_index},
+	{"__len", ulumps_len},
 	{"__tostring", ulumps_tostring},
 	{NULL, NULL}
 };
 
+// Functions in the wad package
 static const luaL_Reg wad_functions[] = {
 	{ "createLumps", wad_createLumps },
 	{ "readwad", wad_readwad },
 	{ NULL, NULL }
 };
 
+// Initialize the wad package
 int luaopen_wad(lua_State* L) {
 	luaL_newlib(L, wad_functions);
 
