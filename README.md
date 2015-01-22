@@ -16,7 +16,7 @@ A: SLADE operates on a single monolithic file, which cannot be version-controlle
 
 Q: Why not use zip/7za in a shell script or makefile?
 
-A: Aside from natively supporting WAD files as output, WADmake can automatically compile ACS libraries, compress PNG files, dedupe textures, and other such things automatically.  In theory, you could create a batch file or shell script to do this for you, but WADmake makes it easy, and is cross-platform to boot.
+A: Aside from natively supporting WAD files as output, WADmake can automatically compile ACS libraries, compress PNG files, dedupe textures, and other such things automatically.  In theory, you could create a batch file or shell script to do this for you, but WADmake makes it easy, and is cross-platform to boot. **NOTE: Doesn't actually do any of this yet, still working on it**
 
 Q: Why not several dozen single-use utilities?
 
