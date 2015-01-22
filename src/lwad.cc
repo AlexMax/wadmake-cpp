@@ -51,14 +51,13 @@ static int wad_readwad(lua_State* L) {
 	lua_createtable(L, 0, 2);
 
 	// Store 'type' in table
-	lua_pushstring(L, "type");
 	Wad::Type wad_type = wad.getType();
 	if (wad_type == Wad::Type::IWAD) {
 		lua_pushstring(L, "iwad");
 	} else if (wad_type == Wad::Type::PWAD) {
 		lua_pushstring(L, "pwad");
 	}
-	lua_settable(L, -3);
+	lua_setfield(L, -2, "type");
 
 	// store 'lumps' in table
 	lua_pushstring(L, "lumps");
@@ -101,6 +100,28 @@ static int ulumps_append(lua_State* L) {
 
 	ptr->push_back(std::move(lump));
 	return 0;
+}
+
+// Get a lump at a particular position (1-indexed)
+static int ulumps_get(lua_State* L) {
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+
+	size_t index = luaL_checkinteger(L, 2);
+	if (index < 1 || index > ptr->size()) {
+		luaL_argerror(L, 2, "index out of range");
+	}
+
+	Lump lump = ptr->at(index - 1);
+	const std::string name = lump.getName();
+	const std::string data = lump.getData();
+
+	lua_createtable(L, 0, 2); /* [table] */
+	lua_pushstring(L, name.c_str()); /* [table][name] */
+	lua_setfield(L, -2, "name"); /* [table] */
+	lua_pushlstring(L, data.data(), data.size()); /* [table][data] */
+	lua_setfield(L, -2, "data"); /* [table] */
+
+	return 1;
 }
 
 // Insert a new lump into a particular position (1-indexed)
@@ -161,31 +182,6 @@ static int ulumps_gc(lua_State* L) {
 	return 0;
 }
 
-// Return a specific index out of Lumps (1-indexed)
-static int ulumps_index(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
-	size_t index = luaL_checkinteger(L, 2);
-	if (index < 1 || index > ptr->size()) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Lump lump = ptr->at(index - 1);
-
-	// Set name (always null-terminated)
-	lua_createtable(L, 0, 2);
-	lua_pushstring(L, "name");
-	lua_pushstring(L, lump.getName().c_str());
-	lua_settable(L, -3);
-
-	// Set data
-	const std::string data = lump.getData();
-	lua_pushstring(L, "data");
-	lua_pushlstring(L, data.data(), data.size());
-	lua_settable(L, -3);
-	return 1;
-}
-
 // Return the length of the Lumps
 static int ulumps_len(lua_State* L) {
 	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
@@ -208,10 +204,10 @@ static int ulumps_tostring(lua_State* L) {
 // Functions attached to Lumps userdata
 static const luaL_Reg ulumps_functions[] = {
 	{"append", ulumps_append},
+	{"get", ulumps_get},
 	{"insert", ulumps_insert},
 	{"remove", ulumps_remove},
 	{"__gc", ulumps_gc},
-	{"__index", ulumps_index},
 	{"__len", ulumps_len},
 	{"__tostring", ulumps_tostring},
 	{NULL, NULL}
