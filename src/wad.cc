@@ -30,11 +30,15 @@ const std::string& Lump::getData() {
 	return this->data;
 }
 
-void Lump::setName(std::string& name) {
+void Lump::setName(std::string&& name) {
 	this->name = name;
 }
 
-void Lump::setData(std::vector<char>& data) {
+void Lump::setData(std::string&& data) {
+	this->data = data;
+}
+
+void Lump::setData(std::vector<char>&& data) {
 	this->data = std::string(std::begin(data), std::end(data));
 }
 
@@ -44,6 +48,16 @@ size_t Directory::size() {
 
 Lump Directory::at(size_t n) {
 	return this->index.at(n);
+}
+
+void Directory::erase_at(size_t index) {
+	std::vector<Lump>::iterator it;
+	this->index.erase(it + index);
+}
+
+void Directory::insert_at(size_t index, Lump&& lump) {
+	std::vector<Lump>::iterator it;
+	this->index.insert(it + index, std::move(lump));
 }
 
 void Directory::push_back(Lump&& lump) {
@@ -126,7 +140,7 @@ Wad::Wad(std::istream& buffer) {
 
 		// Create lump
 		Lump lump;
-		lump.setName(namestring);
+		lump.setName(std::move(namestring));
 
 		// If the size is 0, the file position could be complete
 		// nonsense, so only attempt to read data if size is not 0.
@@ -144,7 +158,7 @@ Wad::Wad(std::istream& buffer) {
 			buffer.read(data.data(), size);
 			buffer.seekg(info);
 
-			lump.setData(data);
+			lump.setData(std::move(data));
 		} else if (size < 0) {
 			std::stringstream error;
 			error << "Size of lump " << i << " is out of range";

@@ -7,7 +7,7 @@ add_subdirectory("tool")
 include_directories("lib/lua-5.3.0/src")
 
 # Sources
-set(WADMAKE_SOURCES src/lwad.cc src/wad.cc)
+set(WADMAKE_SOURCES src/lua.cc src/lwad.cc src/wad.cc)
 set(WADMAKE_HEADERS src/lua.hh src/lwad.hh src/wad.hh)
 set(WADMAKE_LUA_SOURCES src/lua/init.lua)
 

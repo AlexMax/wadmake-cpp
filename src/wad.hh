@@ -29,14 +29,17 @@ class Lump {
 public:
 	const std::string& getName();
 	const std::string& getData();
-	void setName(std::string& name);
-	void setData(std::vector<char>& data);
+	void setName(std::string&& name);
+	void setData(std::string&& name);
+	void setData(std::vector<char>&& data);
 };
 
 class Directory {
 	std::vector<Lump> index;
 public:
 	Lump at(size_t n);
+	void erase_at(size_t index);
+	void insert_at(size_t index, Lump&& lump);
 	void push_back(Lump&& lump);
 	size_t size();
 };

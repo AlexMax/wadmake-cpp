@@ -16,29 +16,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LUA_HH
-#define LUA_HH
+#include "lua.hh"
 
-#include <memory>
-#include <string>
+LuaState::operator lua_State*() {
+	return this->lua.get();
+}
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
+std::string Lua::checklstring(lua_State* L, int arg) {
+	size_t len;
+	const char* buffer = luaL_checklstring(L, arg, &len);
+	return std::string(buffer, len);
+}
 
-class LuaState {
-	std::unique_ptr<lua_State, decltype(&lua_close)> lua;
-public:
-	LuaState() : lua(luaL_newstate(), lua_close) { }
-	operator lua_State*();
-};
+std::string Lua::checkstring(lua_State* L, int arg) {
+	return std::string(luaL_checkstring(L, arg));
+}
 
-class Lua {
-public:
-	static std::string checklstring(lua_State* L, int arg);
-	static std::string checkstring(lua_State* L, int arg);
-	static std::string tolstring(lua_State* L, int index);
-	static std::string tostring(lua_State* L, int index);
-};
+std::string Lua::tolstring(lua_State* L, int index) {
+	size_t len;
+	const char* buffer = lua_tolstring(L, index, &len);
+	return std::string(buffer, len);
+}
 
-#endif
+std::string Lua::tostring(lua_State* L, int index) {
+	return std::string(lua_tostring(L, index));
+}
