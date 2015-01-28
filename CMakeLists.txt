@@ -47,12 +47,22 @@ enable_testing()
 file(DOWNLOAD "http://static.best-ever.org/wads/moo2d.wad" "${CMAKE_BINARY_DIR}/moo2d.wad"
 	EXPECTED_MD5 "2e4635df68da25f78fde58ab179b8c2c")
 
+# Unit testing executable
 include_directories(src)
 add_executable(testwadmake test/testwadmake.cc
 	${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
 target_link_libraries(testwadmake lua53)
-add_test(NAME wadmake COMMAND testwadmake)
-set_target_properties(testwadmake PROPERTIES COMPILE_FLAGS ${CXXFLAGS})
+set_target_properties(testwadmake PROPERTIES COMPILE_FLAGS "${CXXFLAGS} -Wno-unknown-pragmas")
+
+# Running the unit test
+add_test(NAME Test COMMAND testwadmake)
+
+# Running the unit test under valgrind, if available
+find_program(VALGRIND_EXECUTABLE valgrind)
+if(VALGRIND_EXECUTABLE)
+	add_test(NAME Valgrind
+		COMMAND ${VALGRIND_EXECUTABLE} "--error-exitcode=1" "$<TARGET_FILE:testwadmake>")
+endif()
 
 # Target for our .lua files so they'll show up in an IDE
 add_custom_target(wadmake_lua SOURCES ${WADMAKE_LUA_SOURCES})
