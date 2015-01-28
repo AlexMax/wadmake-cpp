@@ -16,10 +16,52 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sstream>
+#include <stdexcept>
+
 #include "lua.hh"
+#include "lwad.hh"
+
+#include "init.lua.hh"
 
 LuaState::operator lua_State*() {
 	return this->lua.get();
+}
+
+LuaEnvironment::LuaEnvironment() {
+	luaL_requiref(this->lua, "_G", luaopen_base, 1);
+	luaL_requiref(this->lua, LUA_LOADLIBNAME, luaopen_package, 1);
+	luaL_requiref(this->lua, LUA_IOLIBNAME, luaopen_io, 1);
+	luaL_requiref(this->lua, "wad", luaopen_wad, 1);
+	lua_pop(this->lua, 4);
+
+	if (luaL_loadbuffer(this->lua, (char*)src_lua_init_lua, src_lua_init_lua_len, "init") != LUA_OK) {
+		std::stringstream error;
+		error << "internal lua error" << std::endl << lua_tostring(this->lua, -1);
+		throw std::runtime_error(error.str());
+	}
+
+	if (lua_pcall(this->lua, 0, LUA_MULTRET, 0) != LUA_OK) {
+		std::stringstream error;
+		error << "internal lua runtime error" << std::endl << lua_tostring(this->lua, -1);
+		throw std::runtime_error(error.str());
+	}
+}
+
+void LuaEnvironment::dofile(const char* filename) {
+	if (luaL_dofile(this->lua, filename) == 1) {
+		std::stringstream error;
+		error << "runtime error" << std::endl << lua_tostring(this->lua, -1);
+		throw std::runtime_error(error.str());
+	}
+}
+
+void LuaEnvironment::dostring(const char* str) {
+	if (luaL_dostring(this->lua, str) == 1) {
+		std::stringstream error;
+		error << "runtime error" << std::endl << lua_tostring(this->lua, -1);
+		throw std::runtime_error(error.str());
+	}
 }
 
 std::string Lua::checklstring(lua_State* L, int arg) {

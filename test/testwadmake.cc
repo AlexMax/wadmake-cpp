@@ -19,7 +19,15 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hh"
 
+#include "lua.hh"
 #include "wad.hh"
+
+// We do not want to implement this method in the live binary, as its
+// use in the codebase itself would almost certainly a mistake, but
+// it's very handy for unit-testing the Lua environment.
+LuaState* LuaEnvironment::getState() {
+	return &(this->lua);
+}
 
 TEST_CASE("Wad can construct from buffer", "[wad]") {
 	std::stringstream buffer;
@@ -27,4 +35,35 @@ TEST_CASE("Wad can construct from buffer", "[wad]") {
 	Wad moo2d(moo2d_wad);
 	Directory dir = moo2d.getLumps();
 	REQUIRE(dir.size() == 11);
+}
+
+TEST_CASE("Don't leave anything on the stack when creating the environment", "[lua]") {
+	LuaEnvironment lua;
+	LuaState* L = lua.getState();
+	REQUIRE(lua_gettop(*L) == 0);
+}
+
+TEST_CASE("Lumps can be created from scratch", "[lwad]") {
+	LuaEnvironment lua;
+	lua.dostring("return wad.createLumps()");
+
+	LuaState* L = lua.getState();
+	REQUIRE(luaL_checkudata(*L, -1, "Lumps") != NULL);
+	REQUIRE(luaL_len(*L, -1) == 0);
+}
+
+TEST_CASE("Lumps can be created from data", "[lwad]") {
+	LuaEnvironment lua;
+	lua.dostring("file = io.open('moo2d.wad');data = file:read('a');return wad.readwad(data)");
+
+	LuaState* L = lua.getState();
+	REQUIRE(lua_type(*L, -1) == LUA_TTABLE);
+
+	REQUIRE(lua_getfield(*L, -1, "type") == LUA_TSTRING);
+	REQUIRE(Lua::checkstring(*L, -1) == std::string("pwad"));
+	lua_pop(*L, 1);
+
+	REQUIRE(lua_getfield(*L, -1, "lumps") == LUA_TUSERDATA);
+	REQUIRE(luaL_checkudata(*L, -1, "Lumps") != NULL);
+	REQUIRE(luaL_len(*L, -1) == 11);
 }

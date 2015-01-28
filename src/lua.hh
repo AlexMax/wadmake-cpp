@@ -33,6 +33,15 @@ public:
 	operator lua_State*();
 };
 
+class LuaEnvironment {
+	LuaState lua;
+public:
+	LuaEnvironment();
+	void dofile(const char* filename);
+	void dostring(const char* str);
+	LuaState* getState(); // Test-only
+};
+
 class Lua {
 public:
 	static std::string checklstring(lua_State* L, int arg);
