@@ -25,6 +25,8 @@
 #include "lua.hh"
 #include "wad.hh"
 
+#include "lwad.lua.hh"
+
 #define META_LUMPS "Lumps"
 
 // Create an empty Lumps userdata
@@ -230,6 +232,11 @@ int luaopen_wad(lua_State* L) {
 	lua_setfield(L, -2, "__index");
 	luaL_setfuncs(L, ulumps_functions, 0);
 	lua_pop(L, 1);
+
+	// Attach functions written in Lua to package
+	luaL_loadbuffer(L, (char*)src_lua_lwad_lua, src_lua_lwad_lua_len, "lwad");
+	lua_pcall(L, 0, LUA_MULTRET, 0);
+	Lua::settfuncs(L, -2);
 
 	return 1;
 }

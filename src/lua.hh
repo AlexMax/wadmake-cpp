@@ -46,6 +46,7 @@ class Lua {
 public:
 	static std::string checklstring(lua_State* L, int arg);
 	static std::string checkstring(lua_State* L, int arg);
+	static void settfuncs(lua_State* L, int index);
 	static std::string tolstring(lua_State* L, int index);
 	static std::string tostring(lua_State* L, int index);
 };

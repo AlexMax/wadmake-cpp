@@ -9,7 +9,7 @@ include_directories("lib/lua-5.3.0/src")
 # Sources
 set(WADMAKE_SOURCES src/lua.cc src/lwad.cc src/wad.cc)
 set(WADMAKE_HEADERS src/lua.hh src/lwad.hh src/wad.hh)
-set(WADMAKE_LUA_SOURCES src/lua/init.lua)
+set(WADMAKE_LUA_SOURCES src/lua/init.lua src/lua/lwad.lua)
 
 # Compile Lua sources into the binary
 set(LUA_HEADER_DIR "${CMAKE_BINARY_DIR}/src/lua")

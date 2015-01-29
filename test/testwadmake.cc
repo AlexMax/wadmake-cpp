@@ -37,10 +37,17 @@ TEST_CASE("Wad can construct from buffer", "[wad]") {
 	REQUIRE(dir.size() == 11);
 }
 
-TEST_CASE("Don't leave anything on the stack when creating the environment", "[lua]") {
+TEST_CASE("Environment should be created correctly", "[lwad]") {
 	LuaEnvironment lua;
 	LuaState* L = lua.getState();
-	REQUIRE(lua_gettop(*L) == 0);
+	SECTION("Don't leave anything on the stack when creating the environment") {
+		REQUIRE(lua_gettop(*L) == 0);
+	}
+	SECTION("wad package should exist") {
+		REQUIRE(lua_getglobal(*L, "wad") == LUA_TTABLE);
+		REQUIRE(lua_getfield(*L, -1, "readwad") == LUA_TFUNCTION);
+		REQUIRE(lua_getfield(*L, -2, "openwad") == LUA_TFUNCTION);
+	}
 }
 
 TEST_CASE("Lumps can be created from scratch", "[lwad]") {

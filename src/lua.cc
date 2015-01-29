@@ -74,6 +74,25 @@ std::string Lua::checkstring(lua_State* L, int arg) {
 	return std::string(luaL_checkstring(L, arg));
 }
 
+// Registers all functions in the table on top of the stack to the table
+// pointed to by index.  Pops the table of functions off the stack.
+void Lua::settfuncs(lua_State* L, int index) {
+	// [tfuncs]
+	lua_pushnil(L);
+	// [tfuncs][nil]
+	while (lua_next(L, -2) != 0) {
+		// [tfuncs][key][value]
+		lua_pushvalue(L, -2);
+		// [tfuncs][key][value][key]
+		lua_insert(L, -2);
+		// [tfuncs][key][key][value]
+		lua_settable(L, index - 3);
+		// [tfuncs][key]
+	}
+	// [tfuncs]
+	lua_pop(L, 1);
+}
+
 std::string Lua::tolstring(lua_State* L, int index) {
 	size_t len;
 	const char* buffer = lua_tolstring(L, index, &len);
