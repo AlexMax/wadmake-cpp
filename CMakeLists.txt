@@ -52,10 +52,18 @@ include_directories(src)
 add_executable(testwadmake test/testwadmake.cc
 	${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
 target_link_libraries(testwadmake lua53)
-set_target_properties(testwadmake PROPERTIES COMPILE_FLAGS "${CXXFLAGS} -Wno-unknown-pragmas")
 
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-Wno-unknown-pragmas" NO_WARN_UNKNOWN_PRAGMAS)
+
+if(NO_WARN_UNKNOWN_PRAGMAS)
+	set_target_properties(testwadmake PROPERTIES COMPILE_FLAGS "${CXXFLAGS} -Wno-unknown-pragmas")
+else()
+	set_target_properties(testwadmake PROPERTIES COMPILE_FLAGS "${CXXFLAGS}")
+endif()
+	
 # Running the unit test
-add_test(NAME Test COMMAND testwadmake)
+add_test(NAME Test COMMAND testwadmake WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Running the unit test under valgrind, if available
 find_program(VALGRIND_EXECUTABLE valgrind)
