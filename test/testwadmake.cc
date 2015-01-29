@@ -61,7 +61,7 @@ TEST_CASE("Lumps can be created from scratch", "[lwad]") {
 
 TEST_CASE("Lumps can be created from data", "[lwad]") {
 	LuaEnvironment lua;
-	lua.dostring("file = io.open('moo2d.wad');data = file:read('a');return wad.readwad(data)");
+	lua.dostring("return wad.openwad('moo2d.wad')");
 
 	LuaState* L = lua.getState();
 	REQUIRE(lua_type(*L, -1) == LUA_TTABLE);
