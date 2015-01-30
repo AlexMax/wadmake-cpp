@@ -74,3 +74,24 @@ TEST_CASE("Lumps can be created from data", "[lwad]") {
 	REQUIRE(luaL_checkudata(*L, -1, "Lumps") != NULL);
 	REQUIRE(luaL_len(*L, -1) == 11);
 }
+
+TEST_CASE("Test Lumps:get()", "[lwad]") {
+	LuaEnvironment lua;
+	lua.dostring("return wad.openwad('moo2d.wad')");
+
+	LuaState* L = lua.getState();
+
+	SECTION("Returns a lump name and data") {
+		luaL_loadstring(*L, "return (...).lumps:get(2)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [table]
+
+		REQUIRE(lua_type(*L, -1) == LUA_TTABLE);
+		REQUIRE(lua_getfield(*L, -1, "name") == LUA_TSTRING);
+		REQUIRE(Lua::checkstring(*L, -1) == "THINGS");
+		lua_pop(*L, 1);
+
+		REQUIRE(lua_getfield(*L, -1, "data") == LUA_TSTRING);
+		REQUIRE(Lua::checklstring(*L, -1).size() == 150);
+	}
+}
