@@ -46,7 +46,7 @@ size_t Directory::size() {
 	return this->index.size();
 }
 
-Lump Directory::at(size_t n) {
+Lump& Directory::at(size_t n) {
 	return this->index.at(n);
 }
 

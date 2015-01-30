@@ -110,20 +110,17 @@ static int ulumps_get(lua_State* L) {
 
 	size_t index = luaL_checkinteger(L, 2);
 	if (index < 1 || index > ptr->size()) {
-		luaL_argerror(L, 2, "index out of range");
+		luaL_argerror(L, 2, "out of range");
 	}
 
 	Lump lump = ptr->at(index - 1);
 	const std::string name = lump.getName();
 	const std::string data = lump.getData();
 
-	lua_createtable(L, 0, 2); /* [table] */
-	lua_pushstring(L, name.c_str()); /* [table][name] */
-	lua_setfield(L, -2, "name"); /* [table] */
-	lua_pushlstring(L, data.data(), data.size()); /* [table][data] */
-	lua_setfield(L, -2, "data"); /* [table] */
+	lua_pushstring(L, name.c_str());
+	lua_pushlstring(L, data.data(), data.size());
 
-	return 1;
+	return 2;
 }
 
 // Insert a new lump into a particular position (1-indexed)
@@ -132,7 +129,7 @@ static int ulumps_insert(lua_State* L) {
 
 	// Second parameter is index to push into
 	size_t index = luaL_checkinteger(L, 2);
-	if (index < 1 || index > ptr->size() + 1) {
+	if (index < 1 || index > ptr->size()) {
 		luaL_argerror(L, 2, "index out of range");
 	}
 
@@ -175,6 +172,53 @@ static int ulumps_remove(lua_State* L) {
 	return 0;
 }
 
+// Set a lump at a particular position (1-indexed)
+static int ulumps_set(lua_State* L) {
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+
+	// Second parameter is index to push into
+	size_t index = luaL_checkinteger(L, 2);
+	if (index < 1 || index > ptr->size()) {
+		luaL_argerror(L, 2, "out of range");
+	}
+
+	int nametype = lua_type(L, 3);
+	int datatype = lua_type(L, 4);
+
+	// Name is string if present, nil if not
+	if (nametype != LUA_TSTRING && nametype != LUA_TNIL) {
+		luaL_argerror(L, 3, "must be string or nil");
+	}
+
+	// Data is string if present, nil if not
+	if (datatype != LUA_TSTRING && datatype != LUA_TNONE) {
+		luaL_argerror(L, 4, "must be string, if present");
+	}
+
+	if (nametype == LUA_TNIL || datatype == LUA_TNONE) {
+		// If one of the parameters is missing, we need the original
+		Lump lump = std::move(ptr->at(index - 1));
+
+		if (nametype == LUA_TSTRING) {
+			lump.setName(Lua::tostring(L, 3));
+		}
+		if (datatype == LUA_TSTRING) {
+			lump.setData(Lua::tolstring(L, 4));
+		}
+
+		ptr->at(index - 1) = std::move(lump);
+	} else {
+		// Both parameters, so a brand new lump.
+		Lump lump;
+		lump.setName(Lua::tostring(L, 3));
+		lump.setData(Lua::tolstring(L, 4));
+
+		ptr->at(index - 1) = std::move(lump);
+	}
+
+	return 0;
+}
+
 // Garbage-collect Lumps
 static int ulumps_gc(lua_State* L) {
 	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
@@ -209,6 +253,7 @@ static const luaL_Reg ulumps_functions[] = {
 	{"get", ulumps_get},
 	{"insert", ulumps_insert},
 	{"remove", ulumps_remove},
+	{"set", ulumps_set},
 	{"__gc", ulumps_gc},
 	{"__len", ulumps_len},
 	{"__tostring", ulumps_tostring},

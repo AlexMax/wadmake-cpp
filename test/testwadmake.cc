@@ -84,14 +84,41 @@ TEST_CASE("Test Lumps:get()", "[lwad]") {
 	SECTION("Returns a lump name and data") {
 		luaL_loadstring(*L, "return (...).lumps:get(2)"); // [lumps][function]
 		lua_insert(*L, -2); // [function][lumps]
-		lua_pcall(*L, 1, LUA_MULTRET, 0); // [table]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name][value]
 
-		REQUIRE(lua_type(*L, -1) == LUA_TTABLE);
-		REQUIRE(lua_getfield(*L, -1, "name") == LUA_TSTRING);
-		REQUIRE(Lua::checkstring(*L, -1) == "THINGS");
-		lua_pop(*L, 1);
-
-		REQUIRE(lua_getfield(*L, -1, "data") == LUA_TSTRING);
+		REQUIRE(Lua::checkstring(*L, -2) == "THINGS");
 		REQUIRE(Lua::checklstring(*L, -1).size() == 150);
+	}
+}
+
+TEST_CASE("Test Lumps:set()", "[lwad]") {
+	LuaEnvironment lua;
+	lua.dostring("return wad.openwad('moo2d.wad')");
+
+	LuaState* L = lua.getState();
+
+	SECTION("Set a lump name") {
+		luaL_loadstring(*L, "(...).lumps:set(1, 'MAP02');return (...).lumps:get(1)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name]
+
+		REQUIRE(Lua::checkstring(*L, -2) == "MAP02");
+	}
+
+	SECTION("Set lump data") {
+		luaL_loadstring(*L, "(...).lumps:set(1, nil, 'hissy');return (...).lumps:get(1)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [data]
+
+		REQUIRE(Lua::checkstring(*L, -1) == "hissy");
+	}
+
+	SECTION("Set both name and data") {
+		luaL_loadstring(*L, "(...).lumps:set(1, 'MAP02', 'hissy');return (...).lumps:get(1)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name][data]
+
+		REQUIRE(Lua::checkstring(*L, -2) == "MAP02");
+		REQUIRE(Lua::checkstring(*L, -1) == "hissy");
 	}
 }

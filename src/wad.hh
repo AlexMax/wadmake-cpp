@@ -37,7 +37,7 @@ public:
 class Directory {
 	std::vector<Lump> index;
 public:
-	Lump at(size_t n);
+	Lump& at(size_t n);
 	void erase_at(size_t index);
 	void insert_at(size_t index, Lump&& lump);
 	void push_back(Lump&& lump);
