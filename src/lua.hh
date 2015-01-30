@@ -21,15 +21,23 @@
 
 #include <memory>
 #include <string>
+#include <stdexcept>
 
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
 
+class LuaPanic : public std::runtime_error {
+public:
+	LuaPanic() : std::runtime_error("") { }
+	LuaPanic(const char* what) : std::runtime_error(what) { }
+};
+
 class LuaState {
 	std::unique_ptr<lua_State, decltype(&lua_close)> lua;
+	static int panic(lua_State* L);
 public:
-	LuaState() : lua(luaL_newstate(), lua_close) { }
+	LuaState();
 	operator lua_State*();
 };
 

@@ -17,12 +17,23 @@
  */
 
 #include <sstream>
-#include <stdexcept>
 
 #include "lua.hh"
 #include "lwad.hh"
 
 #include "init.lua.hh"
+
+int LuaState::panic(lua_State* L) {
+	if (lua_type(L, -1) == LUA_TSTRING) {
+		throw LuaPanic(lua_tostring(L, -1));
+	} else {
+		throw LuaPanic();
+	}
+}
+
+LuaState::LuaState() : lua(luaL_newstate(), lua_close) {
+	lua_atpanic(this->lua.get(), this->panic);
+}
 
 LuaState::operator lua_State*() {
 	return this->lua.get();

@@ -37,7 +37,7 @@ TEST_CASE("Wad can construct from buffer", "[wad]") {
 	REQUIRE(dir.size() == 11);
 }
 
-TEST_CASE("Environment should be created correctly", "[lwad]") {
+TEST_CASE("Environment should be created correctly", "[lua]") {
 	LuaEnvironment lua;
 	LuaState* L = lua.getState();
 	SECTION("Don't leave anything on the stack when creating the environment") {
@@ -48,6 +48,12 @@ TEST_CASE("Environment should be created correctly", "[lwad]") {
 		REQUIRE(lua_getfield(*L, -1, "readwad") == LUA_TFUNCTION);
 		REQUIRE(lua_getfield(*L, -2, "openwad") == LUA_TFUNCTION);
 	}
+}
+
+TEST_CASE("Environment should handle panics as exceptions", "[lua]") {
+	LuaEnvironment lua;
+	LuaState* L = lua.getState();
+	REQUIRE_THROWS_AS(luaL_error(*L, "This error should not abort the program"), LuaPanic);
 }
 
 TEST_CASE("Lumps can be created from scratch", "[lwad]") {
