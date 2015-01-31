@@ -97,6 +97,31 @@ TEST_CASE("Test Lumps:get()", "[lwad]") {
 	}
 }
 
+TEST_CASE("Test Lumps:insert()", "[lwad]") {
+	LuaEnvironment lua;
+	lua.dostring("return wad.openwad('moo2d.wad')");
+
+	LuaState* L = lua.getState();
+
+	SECTION("Append a lump to the end") {
+		luaL_loadstring(*L, "(...).lumps:insert('MAP02', 'hissy');return (...).lumps:get(12)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name]
+
+		REQUIRE(Lua::checkstring(*L, -2) == "MAP02");
+		REQUIRE(Lua::checkstring(*L, -1) == "hissy");
+	}
+
+	SECTION("Insert a lump in the middle") {
+		luaL_loadstring(*L, "(...).lumps:insert(2, 'TEST', 'hissy');return (...).lumps:get(2)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name]
+
+		REQUIRE(Lua::checkstring(*L, -2) == "TEST");
+		REQUIRE(Lua::checkstring(*L, -1) == "hissy");
+	}
+}
+
 TEST_CASE("Test Lumps:set()", "[lwad]") {
 	LuaEnvironment lua;
 	lua.dostring("return wad.openwad('moo2d.wad')");

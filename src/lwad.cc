@@ -72,38 +72,6 @@ static int wad_readwad(lua_State* L) {
 	return 1;
 }
 
-// Append a lump to to the end
-static int ulumps_append(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
-
-	// Accept either two strings or a single table with the proper keys
-	Lump lump;
-	if (lua_istable(L, 2)) {
-		// Grab string for key
-		lua_pushstring(L, "name");
-		if (lua_gettable(L, 2) != LUA_TSTRING) {
-			luaL_argerror(L, 2, "table must contain \"name\" key of type string");
-		}
-		lump.setName(Lua::tostring(L, -1));
-		lua_pop(L, 1);
-
-		// Grab lstring for data
-		lua_pushstring(L, "data");
-		if (lua_gettable(L, 2) != LUA_TSTRING) {
-			luaL_argerror(L, 2, "table must contain \"data\" key of type string");
-		}
-		lump.setData(Lua::tolstring(L, -1));
-	} else if (lua_isstring(L, 2)) {
-		lump.setName(Lua::tostring(L, 2));
-		lump.setData(Lua::checklstring(L, 3));
-	} else {
-		luaL_argerror(L, 3, "must be table or string");
-	}
-
-	ptr->push_back(std::move(lump));
-	return 0;
-}
-
 // Get a lump at a particular position (1-indexed)
 static int ulumps_get(lua_State* L) {
 	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
@@ -127,37 +95,27 @@ static int ulumps_get(lua_State* L) {
 static int ulumps_insert(lua_State* L) {
 	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
 
-	// Second parameter is index to push into
-	size_t index = luaL_checkinteger(L, 2);
-	if (index < 1 || index > ptr->size()) {
-		luaL_argerror(L, 2, "index out of range");
-	}
-
-	// Accept either two strings or a single table with the proper keys
-	Lump lump;
-	if (lua_istable(L, 3)) {
-		// Grab string for key
-		lua_pushstring(L, "name");
-		if (lua_gettable(L, 3) != LUA_TSTRING) {
-			luaL_argerror(L, 3, "table must contain \"name\" key of type string");
+	if (lua_isinteger(L, 2)) {
+		// Second parameter is index to push to
+		size_t index = luaL_checkinteger(L, 2);
+		if (index < 1 || index > ptr->size()) {
+			luaL_argerror(L, 2, "index out of range");
 		}
-		lump.setName(Lua::tostring(L, -1));
-		lua_pop(L, 1);
 
-		// Grab lstring for data
-		lua_pushstring(L, "data");
-		if (lua_gettable(L, 3) != LUA_TSTRING) {
-			luaL_argerror(L, 3, "table must contain \"data\" key of type string");
-		}
-		lump.setData(Lua::tolstring(L, -1));
-	} else if (lua_isstring(L, 3)) {
-		lump.setName(Lua::tostring(L, 3));
+		Lump lump;
+		lump.setName(Lua::checkstring(L, 3));
 		lump.setData(Lua::checklstring(L, 4));
+
+		ptr->insert_at(index - 1, std::move(lump));
 	} else {
-		luaL_argerror(L, 3, "must be table or string");
+		// Append to end
+		Lump lump;
+		lump.setName(Lua::checkstring(L, 2));
+		lump.setData(Lua::checklstring(L, 3));
+
+		ptr->push_back(std::move(lump));
 	}
 
-	ptr->insert_at(index - 1, std::move(lump));
 	return 0;
 }
 
@@ -249,7 +207,6 @@ static int ulumps_tostring(lua_State* L) {
 
 // Functions attached to Lumps userdata
 static const luaL_Reg ulumps_functions[] = {
-	{"append", ulumps_append},
 	{"get", ulumps_get},
 	{"insert", ulumps_insert},
 	{"remove", ulumps_remove},

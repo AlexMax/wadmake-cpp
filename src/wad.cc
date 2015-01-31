@@ -51,12 +51,12 @@ Lump& Directory::at(size_t n) {
 }
 
 void Directory::erase_at(size_t index) {
-	std::vector<Lump>::iterator it;
+	std::vector<Lump>::iterator it = this->index.begin();
 	this->index.erase(it + index);
 }
 
 void Directory::insert_at(size_t index, Lump&& lump) {
-	std::vector<Lump>::iterator it;
+	std::vector<Lump>::iterator it = this->index.begin();
 	this->index.insert(it + index, std::move(lump));
 }
 
