@@ -70,13 +70,8 @@ TEST_CASE("Lumps can be created from data", "[lwad]") {
 	lua.dostring("return wad.openwad('moo2d.wad')");
 
 	LuaState* L = lua.getState();
-	REQUIRE(lua_type(*L, -1) == LUA_TTABLE);
 
-	REQUIRE(lua_getfield(*L, -1, "type") == LUA_TSTRING);
-	REQUIRE(Lua::checkstring(*L, -1) == std::string("pwad"));
-	lua_pop(*L, 1);
-
-	REQUIRE(lua_getfield(*L, -1, "lumps") == LUA_TUSERDATA);
+	REQUIRE(Lua::checkstring(*L, -2) == "pwad");
 	REQUIRE(luaL_checkudata(*L, -1, "Lumps") != NULL);
 	REQUIRE(luaL_len(*L, -1) == 11);
 }
@@ -88,7 +83,7 @@ TEST_CASE("Test Lumps:get()", "[lwad]") {
 	LuaState* L = lua.getState();
 
 	SECTION("Returns a lump name and data") {
-		luaL_loadstring(*L, "return (...).lumps:get(2)"); // [lumps][function]
+		luaL_loadstring(*L, "return (...):get(2)"); // [lumps][function]
 		lua_insert(*L, -2); // [function][lumps]
 		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name][value]
 
@@ -104,7 +99,7 @@ TEST_CASE("Test Lumps:insert()", "[lwad]") {
 	LuaState* L = lua.getState();
 
 	SECTION("Append a lump to the end") {
-		luaL_loadstring(*L, "(...).lumps:insert('MAP02', 'hissy');return (...).lumps:get(12)"); // [lumps][function]
+		luaL_loadstring(*L, "(...):insert('MAP02', 'hissy');return (...):get(12)"); // [lumps][function]
 		lua_insert(*L, -2); // [function][lumps]
 		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name]
 
@@ -113,7 +108,7 @@ TEST_CASE("Test Lumps:insert()", "[lwad]") {
 	}
 
 	SECTION("Insert a lump in the middle") {
-		luaL_loadstring(*L, "(...).lumps:insert(2, 'TEST', 'hissy');return (...).lumps:get(2)"); // [lumps][function]
+		luaL_loadstring(*L, "(...):insert(2, 'TEST', 'hissy');return (...):get(2)"); // [lumps][function]
 		lua_insert(*L, -2); // [function][lumps]
 		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name]
 
@@ -129,7 +124,7 @@ TEST_CASE("Test Lumps:set()", "[lwad]") {
 	LuaState* L = lua.getState();
 
 	SECTION("Set a lump name") {
-		luaL_loadstring(*L, "(...).lumps:set(1, 'MAP02');return (...).lumps:get(1)"); // [lumps][function]
+		luaL_loadstring(*L, "(...):set(1, 'MAP02');return (...):get(1)"); // [lumps][function]
 		lua_insert(*L, -2); // [function][lumps]
 		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name]
 
@@ -137,7 +132,7 @@ TEST_CASE("Test Lumps:set()", "[lwad]") {
 	}
 
 	SECTION("Set lump data") {
-		luaL_loadstring(*L, "(...).lumps:set(1, nil, 'hissy');return (...).lumps:get(1)"); // [lumps][function]
+		luaL_loadstring(*L, "(...):set(1, nil, 'hissy');return (...):get(1)"); // [lumps][function]
 		lua_insert(*L, -2); // [function][lumps]
 		lua_pcall(*L, 1, LUA_MULTRET, 0); // [data]
 
@@ -145,7 +140,7 @@ TEST_CASE("Test Lumps:set()", "[lwad]") {
 	}
 
 	SECTION("Set both name and data") {
-		luaL_loadstring(*L, "(...).lumps:set(1, 'MAP02', 'hissy');return (...).lumps:get(1)"); // [lumps][function]
+		luaL_loadstring(*L, "(...):set(1, 'MAP02', 'hissy');return (...):get(1)"); // [lumps][function]
 		lua_insert(*L, -2); // [function][lumps]
 		lua_pcall(*L, 1, LUA_MULTRET, 0); // [name][data]
 

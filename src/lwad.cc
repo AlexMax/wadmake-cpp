@@ -49,27 +49,20 @@ static int wad_readwad(lua_State* L) {
 	// Stream the data into Wad class to get our WAD type and lumps.
 	Wad wad = Wad(buffer_stream);
 
-	// Create a table
-	lua_createtable(L, 0, 2);
-
-	// Store 'type' in table
+	// WAD type
 	Wad::Type wad_type = wad.getType();
 	if (wad_type == Wad::Type::IWAD) {
 		lua_pushstring(L, "iwad");
 	} else if (wad_type == Wad::Type::PWAD) {
 		lua_pushstring(L, "pwad");
 	}
-	lua_setfield(L, -2, "type");
 
-	// store 'lumps' in table
-	lua_pushstring(L, "lumps");
+	// Lump data
 	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
 	*ptr = new Directory(wad.getLumps());
 	luaL_setmetatable(L, META_LUMPS);
-	lua_settable(L, -3);
 
-	// return our table
-	return 1;
+	return 2;
 }
 
 // Get a lump at a particular position (1-indexed)
