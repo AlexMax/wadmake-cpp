@@ -31,11 +31,11 @@ const std::string& Lump::getData() {
 }
 
 void Lump::setName(std::string&& name) {
-	this->name = name;
+	this->name = std::move(name);
 }
 
 void Lump::setData(std::string&& data) {
-	this->data = data;
+	this->data = std::move(data);
 }
 
 void Lump::setData(std::vector<char>&& data) {
