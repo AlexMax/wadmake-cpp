@@ -41,10 +41,11 @@ LuaState::operator lua_State*() {
 
 LuaEnvironment::LuaEnvironment() {
 	luaL_requiref(this->lua, "_G", luaopen_base, 1);
-	luaL_requiref(this->lua, LUA_LOADLIBNAME, luaopen_package, 1);
 	luaL_requiref(this->lua, LUA_IOLIBNAME, luaopen_io, 1);
+	luaL_requiref(this->lua, LUA_LOADLIBNAME, luaopen_package, 1);
+	luaL_requiref(this->lua, LUA_STRLIBNAME, luaopen_string, 1);
 	luaL_requiref(this->lua, "wad", luaopen_wad, 1);
-	lua_pop(this->lua, 4);
+	lua_pop(this->lua, 5);
 
 	if (luaL_loadbuffer(this->lua, (char*)src_lua_init_lua, src_lua_init_lua_len, "init") != LUA_OK) {
 		std::stringstream error;
