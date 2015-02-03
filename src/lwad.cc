@@ -73,7 +73,7 @@ static int ulumps_find(lua_State* L) {
 
 	// If we passed a 'start' parameter, use it, otherwise the default
 	// index to use is 1.
-	int start;
+	lua_Integer start;
 	if (lua_type(L, 3) != LUA_TNONE) {
 		start = luaL_checkinteger(L, 3);
 	} else {
