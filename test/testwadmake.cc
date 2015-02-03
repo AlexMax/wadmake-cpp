@@ -76,6 +76,68 @@ TEST_CASE("Lumps can be created from data", "[lwad]") {
 	REQUIRE(luaL_len(*L, -1) == 11);
 }
 
+TEST_CASE("Test Lumps:find()", "[lwad]") {
+	LuaEnvironment lua;
+	lua.dostring("return wad.openwad('moo2d.wad')");
+
+	LuaState* L = lua.getState();
+	SECTION("Find a lump index") {
+		luaL_loadstring(*L, "return (...):find('SIDEDEFS')"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [position]
+
+		REQUIRE(luaL_checkinteger(*L, -1) == 4);
+	}
+
+	SECTION("Find a lump index given a starting index") {
+		luaL_loadstring(*L, "return (...):find('SIDEDEFS', 2)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [position]
+
+		REQUIRE(luaL_checkinteger(*L, -1) == 4);
+	}
+
+	SECTION("Find a lump index given a negative starting index") {
+		luaL_loadstring(*L, "return (...):find('SIDEDEFS', -9)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [position]
+
+		REQUIRE(luaL_checkinteger(*L, -1) == 4);
+	}
+
+	SECTION("Find a lump index given the precise starting index") {
+		luaL_loadstring(*L, "return (...):find('SIDEDEFS', 4)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [position]
+
+		REQUIRE(luaL_checkinteger(*L, -1) == 4);
+	}
+
+	SECTION("Find a lump index given the precise negative starting index") {
+		luaL_loadstring(*L, "return (...):find('SIDEDEFS', -8)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [position]
+
+		REQUIRE(luaL_checkinteger(*L, -1) == 4);
+	}
+
+	SECTION("Return nil if lump doesn't exist") {
+		luaL_loadstring(*L, "return (...):find('MAP00')"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [position]
+
+		REQUIRE(lua_isnil(*L, -1));
+	}
+
+	SECTION("Return nil if our find operation starts past the correct lump") {
+		luaL_loadstring(*L, "return (...):find('SIDEDEFS', 5)"); // [lumps][function]
+		lua_insert(*L, -2); // [function][lumps]
+		lua_pcall(*L, 1, LUA_MULTRET, 0); // [position]
+
+		REQUIRE(lua_isnil(*L, -1));
+	}
+}
+
 TEST_CASE("Test Lumps:get()", "[lwad]") {
 	LuaEnvironment lua;
 	lua.dostring("return wad.openwad('moo2d.wad')");

@@ -21,6 +21,7 @@
 
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 class Lump {
@@ -39,6 +40,7 @@ class Directory {
 public:
 	Lump& at(size_t n);
 	void erase_at(size_t index);
+	std::tuple<bool, size_t> find_index(const std::string& name, size_t start);
 	void insert_at(size_t index, Lump&& lump);
 	void push_back(Lump&& lump);
 	size_t size();

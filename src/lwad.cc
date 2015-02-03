@@ -65,6 +65,49 @@ static int wad_readwad(lua_State* L) {
 	return 2;
 }
 
+// Find a lump with a given name
+static int ulumps_find(lua_State* L) {
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+
+	std::string name = Lua::checkstring(L, 2);
+
+	// If we passed a 'start' parameter, use it, otherwise the default
+	// index to use is 1.
+	int start;
+	if (lua_type(L, 3) != LUA_TNONE) {
+		start = luaL_checkinteger(L, 3);
+	} else {
+		start = 1;
+	}
+
+	// Normalize start parameter.
+	if (start == 0) {
+		// Handle case where start is 0, pretend it's 1.
+		start = 1;
+	} else if (start < 0) {
+		// Negative values are from the end
+		start = ptr->size() + start + 1;
+	}
+
+	// If we go out-of-bounds, push a nil.
+	if (static_cast<size_t>(start) > ptr->size()) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	bool success;
+	size_t index;
+	std::tie(success, index) = ptr->find_index(name, start - 1);
+
+	if (success) {
+		lua_pushinteger(L, index + 1);
+	} else {
+		lua_pushnil(L);
+	}
+
+	return 1;
+}
+
 // Get a lump at a particular position (1-indexed)
 static int ulumps_get(lua_State* L) {
 	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
@@ -200,6 +243,7 @@ static int ulumps_tostring(lua_State* L) {
 
 // Functions attached to Lumps userdata
 static const luaL_Reg ulumps_functions[] = {
+	{"find", ulumps_find},
 	{"get", ulumps_get},
 	{"insert", ulumps_insert},
 	{"remove", ulumps_remove},

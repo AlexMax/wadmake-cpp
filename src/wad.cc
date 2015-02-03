@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
@@ -53,6 +54,17 @@ Lump& Directory::at(size_t n) {
 void Directory::erase_at(size_t index) {
 	std::vector<Lump>::iterator it = this->index.begin();
 	this->index.erase(it + index);
+}
+
+std::tuple<bool, size_t> Directory::find_index(const std::string& name, size_t start) {
+	std::vector<Lump>::iterator result = std::find_if(this->index.begin() + start, this->index.end(), [name](Lump lump) {
+		return name == lump.getName();
+	});
+	if (result == this->index.end()) {
+		return std::make_tuple(false, 0);
+	} else {
+		return std::make_tuple(true, result - this->index.begin());
+	}
 }
 
 void Directory::insert_at(size_t index, Lump&& lump) {
