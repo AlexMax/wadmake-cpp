@@ -47,7 +47,8 @@ static int wad_readwad(lua_State* L) {
 	buffer_stream << buffer_string;
 
 	// Stream the data into Wad class to get our WAD type and lumps.
-	Wad wad = Wad(buffer_stream);
+	Wad wad;
+	buffer_stream >> wad;
 
 	// WAD type
 	Wad::Type wad_type = wad.getType();

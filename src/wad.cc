@@ -76,11 +76,11 @@ void Directory::push_back(Lump&& lump) {
 	this->index.push_back(std::move(lump));
 }
 
-Wad::Wad(Wad::Type type) {
-	this->type = type;
-}
+Wad::Wad() : type(Wad::Type::NONE) { }
 
-Wad::Wad(std::istream& buffer) {
+Wad::Wad(Wad::Type type) : type(type) { }
+
+std::istream& operator>>(std::istream& buffer, Wad& wad) {
 	char identifier[4];
 	int32_t numlumps, infotablefs;
 
@@ -94,9 +94,9 @@ Wad::Wad(std::istream& buffer) {
 	}
 
 	if (std::strncmp(identifier, "IWAD", 4) == 0) {
-		this->type = Type::IWAD;
+		wad.type = Wad::Type::IWAD;
 	} else if (std::strncmp(identifier,"PWAD", 4) == 0) {
-		this->type = Type::PWAD;
+		wad.type = Wad::Type::PWAD;
 	} else {
 		throw std::logic_error("Invalid WAD identifier");
 	}
@@ -177,8 +177,10 @@ Wad::Wad(std::istream& buffer) {
 			throw std::out_of_range(error.str());
 		}
 
-		this->lumps.push_back(std::move(lump));
+		wad.lumps.push_back(std::move(lump));
 	}
+
+	return buffer;
 }
 
 Wad::Type Wad::getType() {

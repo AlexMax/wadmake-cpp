@@ -32,7 +32,10 @@ LuaState* LuaEnvironment::getState() {
 TEST_CASE("Wad can construct from buffer", "[wad]") {
 	std::stringstream buffer;
 	std::ifstream moo2d_wad("moo2d.wad", std::fstream::in | std::fstream::binary);
-	Wad moo2d(moo2d_wad);
+
+	Wad moo2d(Wad::Type::NONE);
+	moo2d_wad >> moo2d;
+
 	Directory dir = moo2d.getLumps();
 	REQUIRE(dir.size() == 11);
 }
