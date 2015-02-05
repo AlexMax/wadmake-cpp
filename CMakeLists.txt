@@ -4,11 +4,17 @@ project(wadmake)
 add_subdirectory("lib")
 add_subdirectory("tool")
 
+# Remove unneeded targets from default build
+set_target_properties(example example64 minigzip minigzip64 zlib
+	PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+
+# Include library directories
 include_directories("lib/lua-5.3.0/src")
+include_directories("lib/zlib-1.2.8")
 
 # Sources
-set(WADMAKE_SOURCES src/lua.cc src/lwad.cc src/wad.cc)
-set(WADMAKE_HEADERS src/lua.hh src/lwad.hh src/wad.hh)
+set(WADMAKE_SOURCES src/lua.cc src/lwad.cc src/wad.cc src/zip.cc)
+set(WADMAKE_HEADERS src/lua.hh src/lwad.hh src/wad.hh src/zip.hh)
 set(WADMAKE_LUA_SOURCES src/lua/init.lua src/lua/lwad.lua)
 
 # Compile Lua sources into the binary
@@ -33,11 +39,12 @@ if(MSVC)
 else()
 	set(CXXFLAGS "-Wall -Wextra -std=c++11")
 endif()
+set(WADMAKE_LIBRARIES lua53 zlibstatic)
 
 # Binary
 add_executable(wadmake src/wadmake.cc
 	${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
-target_link_libraries(wadmake lua53)
+target_link_libraries(wadmake ${WADMAKE_LIBRARIES})
 set_target_properties(wadmake PROPERTIES COMPILE_FLAGS ${CXXFLAGS})
 
 # Unit testing
@@ -51,7 +58,7 @@ file(DOWNLOAD "http://static.best-ever.org/wads/moo2d.wad" "${CMAKE_BINARY_DIR}/
 include_directories(src)
 add_executable(testwadmake test/testwadmake.cc
 	${WADMAKE_SOURCES} ${WADMAKE_HEADERS})
-target_link_libraries(testwadmake lua53)
+target_link_libraries(testwadmake ${WADMAKE_LIBRARIES})
 
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-Wno-unknown-pragmas" NO_WARN_UNKNOWN_PRAGMAS)

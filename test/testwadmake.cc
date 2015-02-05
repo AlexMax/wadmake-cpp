@@ -21,6 +21,7 @@
 
 #include "lua.hh"
 #include "wad.hh"
+#include "zip.hh"
 
 // We do not want to implement this method in the live binary, as its
 // use in the codebase itself would almost certainly a mistake, but
@@ -37,6 +38,17 @@ TEST_CASE("Wad can construct from buffer", "[wad]") {
 	moo2d_wad >> moo2d;
 
 	Directory dir = moo2d.getLumps();
+	REQUIRE(dir.size() == 11);
+}
+
+TEST_CASE("Zip can construct from buffer", "[zip]") {
+	std::stringstream buffer;
+	std::ifstream duel32f_pk3("duel32f.pk3", std::fstream::in | std::fstream::binary);
+
+	Zip duel32;
+	duel32f_pk3 >> duel32;
+
+	Directory dir = duel32.getLumps();
 	REQUIRE(dir.size() == 11);
 }
 
