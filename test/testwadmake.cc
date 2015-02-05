@@ -49,7 +49,7 @@ TEST_CASE("Zip can construct from buffer", "[zip]") {
 	duel32f_pk3 >> duel32;
 
 	Directory dir = duel32.getLumps();
-	REQUIRE(dir.size() == 11);
+	REQUIRE(dir.size() == 369);
 }
 
 TEST_CASE("Environment should be created correctly", "[lua]") {

@@ -5,12 +5,16 @@ add_subdirectory("lib")
 add_subdirectory("tool")
 
 # Remove unneeded targets from default build
-set_target_properties(example example64 minigzip minigzip64 zlib
-	PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+foreach(TAR example example64 minigzip minigzip64 zlib)
+	if(TARGET ${TAR})
+		set_target_properties(${TAR} PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+	endif()
+endforeach()
 
 # Include library directories
 include_directories("lib/lua-5.3.0/src")
 include_directories("lib/zlib-1.2.8")
+include_directories("${CMAKE_BINARY_DIR}/lib/zlib-1.2.8") # zconf.h
 
 # Sources
 set(WADMAKE_SOURCES src/lua.cc src/lwad.cc src/wad.cc src/zip.cc)
@@ -53,6 +57,8 @@ enable_testing()
 # Files needed for unit testing
 file(DOWNLOAD "http://static.best-ever.org/wads/moo2d.wad" "${CMAKE_BINARY_DIR}/moo2d.wad"
 	EXPECTED_MD5 "2e4635df68da25f78fde58ab179b8c2c")
+file(DOWNLOAD "http://static.best-ever.org/wads/duel32f.pk3" "${CMAKE_BINARY_DIR}/duel32f.pk3"
+	EXPECTED_MD5 "15dadb7e1976d2c7825e3221c4b649eb")
 
 # Unit testing executable
 include_directories(src)

@@ -58,9 +58,16 @@ static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_l
 	std::vector<char> data_out(out_len);
 	std::stringstream output;
 
-	strm.avail_in = data_in.size();
+	if (data_in.size() > std::numeric_limits<uInt>::max()) {
+		throw std::out_of_range("Input buffer too large");
+	}
+	strm.avail_in = static_cast<uInt>(data_in.size());
 	strm.next_in = reinterpret_cast<Bytef*>(data_in.data());
-	strm.avail_out = data_out.size();
+
+	if (data_in.size() > std::numeric_limits<uInt>::max()) {
+		throw std::out_of_range("Output buffer too large");
+	}
+	strm.avail_out = static_cast<uInt>(data_out.size());
 	strm.next_out = reinterpret_cast<Bytef*>(data_out.data());
 
 	for (;;) {
@@ -91,7 +98,7 @@ static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_l
 		} else {
 			// More stuff to process.
 			output.write(data_out.data(), data_out.size());
-			strm.avail_out = data_out.size();
+			strm.avail_out = static_cast<uInt>(data_out.size());
 			strm.next_out = reinterpret_cast<Bytef*>(data_out.data());
 		}
 	}
@@ -194,8 +201,15 @@ std::istream& operator>>(std::istream& buffer, Zip& zip) {
 
 			if (compressed_size > 0) {
 				switch (compression) {
-					case Zip::Compression::STORE:
-						break;
+				case Zip::Compression::STORE:
+				{
+					std::vector<char> data(compressed_size);
+					if (!buffer.read(data.data(), compressed_size)) {
+						throw std::out_of_range("Couldn't read stored file data");
+					}
+					lump.setData(std::move(data));
+					break;
+				}
 					case Zip::Compression::DEFLATE:
 						lump.setData(zlibInflate(buffer, compressed_size, uncompressed_size));
 						break;
@@ -205,10 +219,11 @@ std::istream& operator>>(std::istream& buffer, Zip& zip) {
 			}
 
 			zip.lumps.push_back(std::move(lump));
-		} else if (std::memcmp(identifier, "\x04\x03KP", sizeof(identifier)) == 0) {
+		} else if (std::memcmp(identifier, "PK\x01\x02", sizeof(identifier)) == 0) {
 			// Central directory
+			return buffer;
 		} else {
-			throw std::logic_error("Invalid ZIP header");
+			throw std::logic_error("Invalid ZIP section header");
 		}
 	}
 
