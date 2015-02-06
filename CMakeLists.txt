@@ -17,8 +17,8 @@ include_directories("lib/zlib-1.2.8")
 include_directories("${CMAKE_BINARY_DIR}/lib/zlib-1.2.8") # zconf.h
 
 # Sources
-set(WADMAKE_SOURCES src/lua.cc src/lwad.cc src/wad.cc src/zip.cc)
-set(WADMAKE_HEADERS src/lua.hh src/lwad.hh src/wad.hh src/zip.hh)
+set(WADMAKE_SOURCES src/buffer.cc src/lua.cc src/lwad.cc src/wad.cc src/zip.cc)
+set(WADMAKE_HEADERS src/buffer.hh src/lua.hh src/lwad.hh src/wad.hh src/zip.hh)
 set(WADMAKE_LUA_SOURCES src/lua/init.lua src/lua/lwad.lua)
 
 # Compile Lua sources into the binary

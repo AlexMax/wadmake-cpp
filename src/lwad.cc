@@ -24,6 +24,7 @@
 
 #include "lua.hh"
 #include "wad.hh"
+#include "zip.hh"
 
 #include "lwad.lua.hh"
 
@@ -64,6 +65,27 @@ static int wad_readwad(lua_State* L) {
 	luaL_setmetatable(L, META_LUMPS);
 
 	return 2;
+}
+
+// Read Zip file data and return lumps contained therin
+static int wad_readzip(lua_State* L) {
+	// Read Zip file data into stringstream.
+	size_t len;
+	const char* buffer = luaL_checklstring(L, 1, &len);
+	std::string buffer_string(buffer, len);
+	std::stringstream buffer_stream;
+	buffer_stream << buffer_string;
+
+	// Stream the data into Zip class to get our lumps.
+	Zip zip;
+	buffer_stream >> zip;
+
+	// Lump data
+	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
+	*ptr = new Directory(zip.getLumps());
+	luaL_setmetatable(L, META_LUMPS);
+
+	return 1;
 }
 
 // Find a lump with a given name
@@ -259,6 +281,7 @@ static const luaL_Reg ulumps_functions[] = {
 static const luaL_Reg wad_functions[] = {
 	{ "createLumps", wad_createLumps },
 	{ "readwad", wad_readwad },
+	{ "readzip", wad_readzip },
 	{ NULL, NULL }
 };
 

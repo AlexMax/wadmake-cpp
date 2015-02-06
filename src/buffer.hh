@@ -16,23 +16,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ZIP_HH
-#define ZIP_HH
+#ifndef BUFFER_HH
+#define BUFFER_HH
 
-#include <cstdint>
+#include <iosfwd>
+#include <string>
+#include <vector>
 
-#include "wad.hh"
-
-class Zip {
-	size_t filesize;
-	Directory lumps;
-	void parseLocalFile(std::istream& buffer);
-	void parseCentralDirectory(std::istream& buffer);
-	void parseEndCentralDirectory(std::istream& buffer);
-public:
-	enum Compression : uint16_t { STORE = 0, DEFLATE = 8 };
-	const Directory& getLumps();
-	friend std::istream& operator>>(std::istream& buffer, Zip& zip);
-};
+std::string ReadString(std::istream& buffer, size_t len);
+std::vector<char> ReadBuffer(std::istream& buffer, size_t len);
+uint8_t ReadUInt8(std::istream& buffer);
+uint16_t ReadUInt16LE(std::istream& buffer);
+uint32_t ReadUInt32LE(std::istream& buffer);
+uint64_t ReadUInt64LE(std::istream& buffer);
 
 #endif

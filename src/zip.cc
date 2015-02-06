@@ -17,12 +17,14 @@
  */
 
 #include <cstring>
+#include <limits>
 #include <new>
 #include <sstream>
 #include <stdexcept>
 
 #include <zlib.h>
 
+#include "buffer.hh"
 #include "zip.hh"
 
 static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_len) {
@@ -108,124 +110,231 @@ static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_l
 	return std::string(output.str());
 }
 
-const Directory& Zip::getLumps() {
-	return this->lumps;
-}
+// Parse a local file entry.  Assumes the buffer is set to the location
+// of the local file entry's magic number.
+void Zip::parseLocalFile(std::istream& buffer) {
+	// Identifier
+	std::vector<char> identifier = ReadBuffer(buffer, 4);
+	if (std::memcmp(identifier.data(), "PK\x03\x04", identifier.size()) != 0) {
+		throw std::runtime_error("Not a valid central directory entry");
+	}
 
-std::istream& operator>>(std::istream& buffer, Zip& zip) {
-	char identifier[4];
+	// Version needed to extract
+	ReadUInt16LE(buffer);
 
-	while (!buffer.eof()) {
-		// Either a local file header or a central directory header
-		if (!buffer.read(identifier, sizeof(identifier))) {
-			throw std::out_of_range("Couldn't read ZIP header");
-		}
+	// General purpose bitflag
+	ReadUInt16LE(buffer);
 
-		if (std::memcmp(identifier, "PK\x03\x04", sizeof(identifier)) == 0) {
-			// Local file
-			Lump lump;
+	// Compression method
+	Zip::Compression compression = static_cast<Zip::Compression>(ReadUInt16LE(buffer));
+	switch (compression) {
+	case Zip::Compression::STORE:
+	case Zip::Compression::DEFLATE:
+		break;
+	default:
+		throw std::runtime_error("Unsupported compression");
+	}
 
-			// Version needed to extract
-			uint16_t version;
-			if (!buffer.read(reinterpret_cast<char*>(&version), sizeof(version))) {
-				throw std::out_of_range("Couldn't read file's version requirement");
-			}
+	// Last modified file time
+	ReadUInt16LE(buffer);
 
-			// Check bitflags
-			uint16_t bitflags;
-			if (!buffer.read(reinterpret_cast<char*>(&bitflags), sizeof(bitflags))) {
-				throw std::out_of_range("Couldn't read file's bitflags");
-			}
+	// Last modified file date
+	ReadUInt16LE(buffer);
 
-			// Check compression method
-			Zip::Compression compression;
-			if (!buffer.read(reinterpret_cast<char*>(&compression), sizeof(compression))) {
-				throw std::out_of_range("Couldn't read file's compression type");
-			}
+	// CRC32
+	uint32_t crc_expected = ReadUInt32LE(buffer);
 
-			switch (compression) {
-				case Zip::Compression::STORE:
-				case Zip::Compression::DEFLATE:
-					break; // We can handle
-				default:
-					throw std::out_of_range("Unsupported file compression method");
-			}
+	// Compressed size
+	uint32_t compressed_size = ReadUInt32LE(buffer);
 
-			// We don't care about modified date/time
-			if (!buffer.seekg(4, buffer.cur)) {
-				throw std::out_of_range("Couldn't skip past file date/time");
-			}
+	// Uncompressed size
+	uint32_t uncompressed_size = ReadUInt32LE(buffer);
 
-			// CRC32
-			uint32_t crc;
-			if (!buffer.read(reinterpret_cast<char*>(&crc), sizeof(crc))) {
-				throw std::out_of_range("Couldn't read file's CRC32");
-			}
+	// Filename length
+	uint16_t filename_len = ReadUInt16LE(buffer);
 
-			// Compressed size
-			uint32_t compressed_size;
-			if (!buffer.read(reinterpret_cast<char*>(&compressed_size), sizeof(compressed_size))) {
-				throw std::out_of_range("Couldn't read file's compressed size");
-			}
+	// Extra field length
+	uint16_t extra_len = ReadUInt16LE(buffer);
 
-			// Uncompressed size
-			uint32_t uncompressed_size;
-			if (!buffer.read(reinterpret_cast<char*>(&uncompressed_size), sizeof(uncompressed_size))) {
-				throw std::out_of_range("Couldn't read file's uncompressed size");
-			}
+	// Filename
+	std::string filename = ReadString(buffer, filename_len);
 
-			// Filename length
-			uint16_t filename_len;
-			if (!buffer.read(reinterpret_cast<char*>(&filename_len), sizeof(filename_len))) {
-				throw std::out_of_range("Couldn't read file's filename length");
-			}
+	// Extra field
+	ReadBuffer(buffer, extra_len);
 
-			// Extra field length
-			uint16_t extra_len;
-			if (!buffer.read(reinterpret_cast<char*>(&extra_len), sizeof(extra_len))) {
-				throw std::out_of_range("Couldn't read file's extra field length");
-			}
+	// File data
+	Lump lump;
+	lump.setName(std::move(filename));
 
-			// Filename
-			std::vector<char> filename(filename_len);
-			if (!buffer.read(filename.data(), filename_len)) {
-				throw std::out_of_range("Couldn't read file's filename");
-			}
-
-			lump.setName(std::string(filename.data(), filename_len));
-
-			// Skip extra field
-			if (!buffer.seekg(extra_len, buffer.cur)) {
-				throw std::out_of_range("Couldn't skip past file's extra field");
-			}
-
-			if (compressed_size > 0) {
-				switch (compression) {
-				case Zip::Compression::STORE:
-				{
-					std::vector<char> data(compressed_size);
-					if (!buffer.read(data.data(), compressed_size)) {
-						throw std::out_of_range("Couldn't read stored file data");
-					}
-					lump.setData(std::move(data));
-					break;
-				}
-					case Zip::Compression::DEFLATE:
-						lump.setData(zlibInflate(buffer, compressed_size, uncompressed_size));
-						break;
-					default:
-						throw std::out_of_range("Compression not implemented");
-				}
-			}
-
-			zip.lumps.push_back(std::move(lump));
-		} else if (std::memcmp(identifier, "PK\x01\x02", sizeof(identifier)) == 0) {
-			// Central directory
-			return buffer;
-		} else {
-			throw std::logic_error("Invalid ZIP section header");
+	if (compressed_size > 0) {
+		switch (compression) {
+		case Zip::Compression::STORE:
+			lump.setData(ReadBuffer(buffer, compressed_size));
+			break;
+		case Zip::Compression::DEFLATE:
+			lump.setData(zlibInflate(buffer, compressed_size, uncompressed_size));
+			break;
+		default:
+			throw std::runtime_error("Unsupported compression");
 		}
 	}
 
+	std::string data = lump.getData();
+	uint32_t crc_actual = crc32(0, reinterpret_cast<const Bytef*>(data.data()), data.size());
+	if (crc_expected != crc_actual) {
+		throw std::runtime_error("CRC check failed");
+	}
+
+	this->lumps.push_back(std::move(lump));
+}
+
+// Parse a Central Directory entry.  Assumes the buffer is set to the
+// location of the Central Directory entry's magic number.
+void Zip::parseCentralDirectory(std::istream& buffer) {
+	// Identifier
+	std::vector<char> identifier = ReadBuffer(buffer, 4);
+	if (std::memcmp(identifier.data(), "PK\x01\x02", identifier.size()) != 0) {
+		throw std::runtime_error("Not a valid central directory entry");
+	}
+
+	// Version made by
+	ReadUInt16LE(buffer);
+
+	// Version needed to extract
+	ReadUInt16LE(buffer);
+
+	// General purpose bitflag
+	ReadUInt16LE(buffer);
+
+	// Compression method
+	ReadUInt16LE(buffer);
+
+	// Last modified file time
+	ReadUInt16LE(buffer);
+
+	// Last modified file date
+	ReadUInt16LE(buffer);
+
+	// CRC32
+	ReadUInt32LE(buffer);
+
+	// Compressed size
+	ReadUInt32LE(buffer);
+
+	// Uncompressed size
+	ReadUInt32LE(buffer);
+
+	// Filename length
+	uint16_t filename_len = ReadUInt16LE(buffer);
+
+	// Extra field length
+	uint16_t extra_len = ReadUInt16LE(buffer);
+
+	// File comment length
+	uint16_t comment_len = ReadUInt16LE(buffer);
+
+	// Disk number start
+	if (ReadUInt16LE(buffer) != 0) {
+		throw std::runtime_error("Multi-part ZIP files are not supported");
+	}
+
+	// Internal file attibutes
+	ReadUInt16LE(buffer);
+
+	// External file attibutes
+	ReadUInt32LE(buffer);
+
+	// Relative offset of local file header
+	uint32_t offset = ReadUInt32LE(buffer);
+	if (offset > this->filesize) {
+		throw std::runtime_error("Invalid local file header offset");
+	}
+
+	// Filename
+	std::string filename = ReadString(buffer, filename_len);
+
+	// Extra field
+	ReadBuffer(buffer, extra_len);
+
+	// Comment
+	ReadBuffer(buffer, comment_len);
+
+	// We've parsed a directory entry, but we still need to parse the
+	// actual file itself.
+	size_t save = buffer.tellg();
+	buffer.seekg(offset);
+	this->parseLocalFile(buffer);
+	buffer.seekg(save);
+}
+
+// Parse the End of Central Directory header in a ZIP file, assuming we
+// have already parsed the magic number.
+void Zip::parseEndCentralDirectory(std::istream& buffer) {
+	// Disk number
+	if (ReadUInt16LE(buffer) != 0) {
+		throw std::runtime_error("Multi-part ZIP files are not supported");
+	}
+
+	// Disk number of central directory
+	if (ReadUInt16LE(buffer) != 0) {
+		throw std::runtime_error("Multi-part ZIP files are not supported");
+	}
+
+	// Central directory entries
+	uint16_t cdentries = ReadUInt16LE(buffer);
+
+	// Total number of central directory entries
+	uint16_t total_cdentries = ReadUInt16LE(buffer);
+	if (cdentries != total_cdentries) {
+		throw std::runtime_error("Central directory entry count does not equal total");
+	}
+
+	// Size of the central directory
+	uint32_t cdsize = ReadUInt32LE(buffer);
+
+	// Offset of central directory
+	uint32_t cdoffset = ReadUInt32LE(buffer);
+	if (cdoffset > this->filesize) {
+		throw std::runtime_error("Invalid central directory offset");
+	}
+
+	// Read every entry in the central directory
+	buffer.seekg(cdoffset);
+	for (size_t index = 0;index < cdentries;index++) {
+		this->parseCentralDirectory(buffer);
+	}
+}
+
+std::istream& operator>>(std::istream& buffer, Zip& zip) {
+	// Ensure our buffer is big enough to be a ZIP file
+	buffer.seekg(0, buffer.end);
+	zip.filesize = buffer.tellg();
+	if (zip.filesize < 22) {
+		throw std::runtime_error("Buffer is not ZIP file - too small");
+	}
+
+	// Start at the end and work backwards until we find an end of
+	// central directory record.  22 is the closest the End of Central
+	// Directory header could possibly be to the end.
+	buffer.seekg(-22, buffer.end);
+
+	for (;;) {
+		std::vector<char> identifier = ReadBuffer(buffer, 4);
+		if (std::memcmp(identifier.data(), "PK\x05\x06", identifier.size()) == 0) {
+			zip.parseEndCentralDirectory(buffer);
+			break;
+		}
+
+		if (buffer.tellg() == 0) {
+			throw std::runtime_error("Buffer is not ZIP file - can't find identifier");
+		}
+
+		buffer.seekg(-1, buffer.cur);
+	}
+
 	return buffer;
+}
+
+const Directory& Zip::getLumps() {
+	return this->lumps;
 }

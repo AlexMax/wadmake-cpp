@@ -19,6 +19,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hh"
 
+#include "buffer.hh"
 #include "lua.hh"
 #include "wad.hh"
 #include "zip.hh"
@@ -28,6 +29,32 @@
 // it's very handy for unit-testing the Lua environment.
 LuaState* LuaEnvironment::getState() {
 	return &(this->lua);
+}
+
+TEST_CASE("ReadString can read into string given a stream and length", "[bit]") {
+	std::stringstream buffer;
+	buffer << 'A' << 'B' << '\0' << 'D';
+	std::string actual = ReadString(buffer, 4);
+	REQUIRE(actual.size() == 4);
+	REQUIRE(actual == buffer.str());
+}
+
+TEST_CASE("ReadUInt16LE can read 16-bit Little Endian integers", "[bit]") {
+	std::stringstream buffer;
+	buffer << "\xFF\xFE";
+	REQUIRE(ReadUInt16LE(buffer) == 65279);
+}
+
+TEST_CASE("ReadUInt32LE can read 32-bit Little Endian integers", "[bit]") {
+	std::stringstream buffer;
+	buffer << "\xFF\xFE\xFD\xFC";
+	REQUIRE(ReadUInt32LE(buffer) == 4244504319);
+}
+
+TEST_CASE("ReadUInt64LE can read 64-bit Little Endian integers", "[bit]") {
+	std::stringstream buffer;
+	buffer << "\xFF\xFE\xFD\xFC\xFB\xFA\xF9\xF8";
+	REQUIRE(ReadUInt64LE(buffer) == 18446744073659088639ull);
 }
 
 TEST_CASE("Wad can construct from buffer", "[wad]") {
