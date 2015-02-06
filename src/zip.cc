@@ -179,8 +179,12 @@ void Zip::parseLocalFile(std::istream& buffer) {
 		}
 	}
 
+	// Check the CRC32 sum.
 	std::string data = lump.getData();
-	uint32_t crc_actual = crc32(0, reinterpret_cast<const Bytef*>(data.data()), data.size());
+	if (data.size() > std::numeric_limits<uInt>::max()) {
+		throw std::runtime_error("File is too big for CRC check");
+	}
+	uint32_t crc_actual = crc32(0, reinterpret_cast<const Bytef*>(data.data()), static_cast<uInt>(data.size()));
 	if (crc_expected != crc_actual) {
 		throw std::runtime_error("CRC check failed");
 	}
@@ -261,7 +265,7 @@ void Zip::parseCentralDirectory(std::istream& buffer) {
 
 	// We've parsed a directory entry, but we still need to parse the
 	// actual file itself.
-	size_t save = buffer.tellg();
+	auto save = buffer.tellg();
 	buffer.seekg(offset);
 	this->parseLocalFile(buffer);
 	buffer.seekg(save);
@@ -290,7 +294,7 @@ void Zip::parseEndCentralDirectory(std::istream& buffer) {
 	}
 
 	// Size of the central directory
-	uint32_t cdsize = ReadUInt32LE(buffer);
+	ReadUInt32LE(buffer);
 
 	// Offset of central directory
 	uint32_t cdoffset = ReadUInt32LE(buffer);
@@ -325,7 +329,7 @@ std::istream& operator>>(std::istream& buffer, Zip& zip) {
 			break;
 		}
 
-		if (buffer.tellg() == 0) {
+		if (buffer.tellg() == static_cast<std::char_traits<char>::pos_type>(0)) {
 			throw std::runtime_error("Buffer is not ZIP file - can't find identifier");
 		}
 

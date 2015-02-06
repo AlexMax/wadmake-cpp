@@ -84,10 +84,6 @@ std::istream& operator>>(std::istream& buffer, Wad& wad) {
 	char identifier[4];
 	int32_t numlumps, infotablefs;
 
-	// [AM] Assume that the current stream position is the first byte
-	//      of a WAD file.
-	size_t start = buffer.tellg();
-
 	// WAD identifier
 	if (!buffer.read(identifier, sizeof(identifier))) {
 		throw std::out_of_range("Couldn't read WAD identifier");
@@ -117,11 +113,11 @@ std::istream& operator>>(std::istream& buffer, Wad& wad) {
 		throw std::out_of_range("Couldn't read infotable location");
 	}
 
-	if (infotablefs < 0 || start > SIZE_MAX - infotablefs) {
+	if (infotablefs < 0) {
 		throw std::out_of_range("Position of infotable is out of range");
 	}
 
-	if (!buffer.seekg(start + infotablefs)) {
+	if (!buffer.seekg(infotablefs)) {
 		throw std::out_of_range("Couldn't find infotable");
 	}
 
@@ -157,16 +153,16 @@ std::istream& operator>>(std::istream& buffer, Wad& wad) {
 		// If the size is 0, the file position could be complete
 		// nonsense, so only attempt to read data if size is not 0.
 		if (size > 0) {
-			if (filepos < 0 || start > SIZE_MAX - filepos) {
+			if (filepos < 0) {
 				std::stringstream error;
 				error << "Position of lump " << i << " is out of range";
 				throw std::out_of_range(error.str());
 			}
 
-			size_t info = buffer.tellg();
+			auto info = buffer.tellg();
 			std::vector<char> data(size);
 
-			buffer.seekg(start + filepos);
+			buffer.seekg(filepos);
 			buffer.read(data.data(), size);
 			buffer.seekg(info);
 

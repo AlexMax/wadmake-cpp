@@ -16,27 +16,38 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdint>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
 
 std::string ReadString(std::istream& buffer, size_t len) {
+	if (len == 0) {
+		return std::string();
+	}
+
 	std::vector<char> result(len);
 	if (!buffer.read(result.data(), len)) {
 		std::stringstream err;
 		err << "Couldn't read " << len << " bytes from stream";
 		throw std::runtime_error(err.str());
 	}
+
 	return std::string(result.begin(), result.end());
 }
 
 std::vector<char> ReadBuffer(std::istream& buffer, size_t len) {
+	if (len == 0) {
+		return std::vector<char>();
+	}
+
 	std::vector<char> result(len);
 	if (!buffer.read(result.data(), len)) {
 		std::stringstream err;
 		err << "Couldn't read " << len << " bytes from stream";
 		throw std::runtime_error(err.str());
 	}
+
 	return result;
 }
 
