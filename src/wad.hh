@@ -24,6 +24,8 @@
 #include <tuple>
 #include <vector>
 
+namespace WADmake {
+
 class Lump {
 	std::string name;
 	std::string data;
@@ -58,5 +60,7 @@ private:
 	Type type;
 	Directory lumps;
 };
+
+}
 
 #endif

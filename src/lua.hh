@@ -29,6 +29,8 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+namespace WADmake {
+
 class LuaPanic : public std::runtime_error {
 public:
 	LuaPanic() : std::runtime_error("") { }
@@ -63,5 +65,7 @@ public:
 	static std::string tolstring(lua_State* L, int index);
 	static std::string tostring(lua_State* L, int index);
 };
+
+}
 
 #endif

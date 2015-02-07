@@ -19,6 +19,10 @@
 #ifndef LUAWAD_HH
 #define LUAWAD_HH
 
+namespace WADmake {
+
 int luaopen_wad(lua_State* L);
+
+}
 
 #endif

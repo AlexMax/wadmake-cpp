@@ -26,15 +26,17 @@
 #include "wad.hh"
 #include "zip.hh"
 
+namespace WADmake {
+
 #include "luawad.lua.hh"
 
-#define META_LUMPS "Lumps"
+static const char META_LUMPS[] = "LUMPS";
 
 // Create an empty Lumps userdata
 static int wad_createLumps(lua_State* L) {
 	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
 	*ptr = new Directory();
-	luaL_setmetatable(L, META_LUMPS);
+	luaL_setmetatable(L, WADmake::META_LUMPS);
 	return 1;
 }
 
@@ -62,7 +64,7 @@ static int wad_readwad(lua_State* L) {
 	// Lump data
 	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
 	*ptr = new Directory(wad.getLumps());
-	luaL_setmetatable(L, META_LUMPS);
+	luaL_setmetatable(L, WADmake::META_LUMPS);
 
 	return 2;
 }
@@ -83,14 +85,14 @@ static int wad_readzip(lua_State* L) {
 	// Lump data
 	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
 	*ptr = new Directory(zip.getLumps());
-	luaL_setmetatable(L, META_LUMPS);
+	luaL_setmetatable(L, WADmake::META_LUMPS);
 
 	return 1;
 }
 
 // Find a lump with a given name
 static int ulumps_find(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
 
 	std::string name = Lua::checkstring(L, 2);
 
@@ -133,7 +135,7 @@ static int ulumps_find(lua_State* L) {
 
 // Get a lump at a particular position (1-indexed)
 static int ulumps_get(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
 
 	size_t index = luaL_checkinteger(L, 2);
 	if (index < 1 || index > ptr->size()) {
@@ -152,7 +154,7 @@ static int ulumps_get(lua_State* L) {
 
 // Insert a new lump into a particular position (1-indexed)
 static int ulumps_insert(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
 
 	if (lua_isinteger(L, 2)) {
 		// Second parameter is index to push to
@@ -180,7 +182,7 @@ static int ulumps_insert(lua_State* L) {
 
 // Remove a lump from a particular position
 static int ulumps_remove(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
 	size_t index = luaL_checkinteger(L, 2);
 	if (index < 1 || index > ptr->size()) {
 		luaL_argerror(L, 2, "index out of range");
@@ -191,7 +193,7 @@ static int ulumps_remove(lua_State* L) {
 
 // Set a lump at a particular position (1-indexed)
 static int ulumps_set(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
 
 	// Second parameter is index to push into
 	size_t index = luaL_checkinteger(L, 2);
@@ -238,7 +240,7 @@ static int ulumps_set(lua_State* L) {
 
 // Garbage-collect Lumps
 static int ulumps_gc(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
 	if (ptr) {
 		delete ptr;
 	}
@@ -247,19 +249,19 @@ static int ulumps_gc(lua_State* L) {
 
 // Return the length of the Lumps
 static int ulumps_len(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
 	lua_pushinteger(L, ptr->size());
 	return 1;
 }
 
 // Print Lumps as a string
 static int ulumps_tostring(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, META_LUMPS);
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
 	size_t size = ptr->size();
 	if (size == 1) {
-		lua_pushfstring(L, META_LUMPS ": %p, %d lump", ptr, ptr->size());
+		lua_pushfstring(L, "%s: %p, %d lump", WADmake::META_LUMPS, ptr, ptr->size());
 	} else {
-		lua_pushfstring(L, META_LUMPS ": %p, %d lumps", ptr, ptr->size());
+		lua_pushfstring(L, "%s: %p, %d lumps", WADmake::META_LUMPS,ptr, ptr->size());
 	}
 	return 1;
 }
@@ -290,7 +292,7 @@ int luaopen_wad(lua_State* L) {
 	luaL_newlib(L, wad_functions);
 
 	// Create "Lumps" userdata
-	luaL_newmetatable(L, META_LUMPS);
+	luaL_newmetatable(L, WADmake::META_LUMPS);
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "__index");
 	luaL_setfuncs(L, ulumps_functions, 0);
@@ -302,4 +304,6 @@ int luaopen_wad(lua_State* L) {
 	Lua::settfuncs(L, -2);
 
 	return 1;
+}
+
 }

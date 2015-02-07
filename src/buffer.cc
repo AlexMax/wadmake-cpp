@@ -21,6 +21,8 @@
 #include <stdexcept>
 #include <vector>
 
+namespace WADmake {
+
 std::string ReadString(std::istream& buffer, size_t len) {
 	if (len == 0) {
 		return std::string();
@@ -89,4 +91,6 @@ uint64_t ReadUInt64LE(std::istream& buffer) {
 					  (static_cast<uint64_t>(raw[6]) << 48) |
 					  (static_cast<uint64_t>(raw[7]) << 56);
 	return result;
+}
+
 }

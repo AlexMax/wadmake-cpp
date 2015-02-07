@@ -24,6 +24,8 @@
 #include "wad.hh"
 #include "zip.hh"
 
+namespace WADmake {
+
 // We do not want to implement this method in the live binary, as its
 // use in the codebase itself would almost certainly a mistake, but
 // it's very handy for unit-testing the Lua environment.
@@ -251,4 +253,6 @@ TEST_CASE("Test Lumps:set()", "[lwad]") {
 		REQUIRE(Lua::checkstring(*L, -2) == "MAP02");
 		REQUIRE(Lua::checkstring(*L, -1) == "hissy");
 	}
+}
+
 }

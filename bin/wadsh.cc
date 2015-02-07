@@ -22,7 +22,7 @@
 #include "lua.hh"
 
 int main(int argc, char** argv) {
-	LuaEnvironment lua;
+	WADmake::LuaEnvironment lua;
 
 	if (argc > 1) {
 		if (std::strcmp(argv[1], "-") == 0) {

@@ -23,6 +23,8 @@
 
 #include "wad.hh"
 
+namespace WADmake {
+
 const std::string& Lump::getName() {
 	return this->name;
 }
@@ -185,4 +187,6 @@ Wad::Type Wad::getType() {
 
 const Directory& Wad::getLumps() {
 	return this->lumps;
+}
+
 }

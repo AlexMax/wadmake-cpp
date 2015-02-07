@@ -23,6 +23,8 @@
 
 #include "init.lua.hh"
 
+namespace WADmake {
+
 int LuaState::panic(lua_State* L) {
 	if (lua_type(L, -1) == LUA_TSTRING) {
 		throw LuaPanic(lua_tostring(L, -1));
@@ -162,4 +164,6 @@ std::string Lua::tolstring(lua_State* L, int index) {
 
 std::string Lua::tostring(lua_State* L, int index) {
 	return std::string(lua_tostring(L, index));
+}
+
 }

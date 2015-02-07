@@ -23,6 +23,8 @@
 
 #include "wad.hh"
 
+namespace WADmake {
+
 class Zip {
 	size_t filesize;
 	Directory lumps;
@@ -34,5 +36,7 @@ public:
 	const Directory& getLumps();
 	friend std::istream& operator>>(std::istream& buffer, Zip& zip);
 };
+
+}
 
 #endif

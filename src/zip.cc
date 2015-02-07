@@ -27,6 +27,8 @@
 #include "buffer.hh"
 #include "zip.hh"
 
+namespace WADmake {
+
 static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_len) {
 	z_stream strm;
 
@@ -341,4 +343,6 @@ std::istream& operator>>(std::istream& buffer, Zip& zip) {
 
 const Directory& Zip::getLumps() {
 	return this->lumps;
+}
+
 }

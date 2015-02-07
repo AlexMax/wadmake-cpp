@@ -24,11 +24,15 @@
 #include <string>
 #include <vector>
 
+namespace WADmake {
+
 std::string ReadString(std::istream& buffer, size_t len);
 std::vector<char> ReadBuffer(std::istream& buffer, size_t len);
 uint8_t ReadUInt8(std::istream& buffer);
 uint16_t ReadUInt16LE(std::istream& buffer);
 uint32_t ReadUInt32LE(std::istream& buffer);
 uint64_t ReadUInt64LE(std::istream& buffer);
+
+}
 
 #endif
