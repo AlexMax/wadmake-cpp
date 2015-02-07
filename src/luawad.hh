@@ -16,8 +16,8 @@
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LWAD_HH
-#define LWAD_HH
+#ifndef LUAWAD_HH
+#define LUAWAD_HH
 
 int luaopen_wad(lua_State* L);
 

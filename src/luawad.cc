@@ -26,7 +26,7 @@
 #include "wad.hh"
 #include "zip.hh"
 
-#include "lwad.lua.hh"
+#include "luawad.lua.hh"
 
 #define META_LUMPS "Lumps"
 
@@ -297,7 +297,7 @@ int luaopen_wad(lua_State* L) {
 	lua_pop(L, 1);
 
 	// Attach functions written in Lua to package
-	luaL_loadbuffer(L, (char*)lwad_lua, lwad_lua_len, "lwad");
+	luaL_loadbuffer(L, (char*)luawad_lua, luawad_lua_len, "lwad");
 	lua_pcall(L, 0, LUA_MULTRET, 0);
 	Lua::settfuncs(L, -2);
 

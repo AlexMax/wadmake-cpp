@@ -19,7 +19,7 @@
 #include <sstream>
 
 #include "lua.hh"
-#include "lwad.hh"
+#include "luawad.hh"
 
 #include "init.lua.hh"
 

@@ -21,9 +21,9 @@ else()
 endif()
 
 # Sources
-set(WADMAKE_SOURCES buffer.cc lua.cc lwad.cc wad.cc zip.cc)
-set(WADMAKE_HEADERS buffer.hh lua.hh lwad.hh wad.hh zip.hh)
-set(WADMAKE_LUA_SOURCES init.lua lwad.lua)
+set(WADMAKE_SOURCES buffer.cc lua.cc luawad.cc wad.cc zip.cc)
+set(WADMAKE_HEADERS buffer.hh lua.hh luawad.hh wad.hh zip.hh)
+set(WADMAKE_LUA_SOURCES init.lua luawad.lua)
 
 dump_lua("${WADMAKE_LUA_SOURCES}" ".hh" WADMAKE_LUA_HEADERS)
 
