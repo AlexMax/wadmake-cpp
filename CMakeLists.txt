@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 2.6)
 project(wadmake)
 
+# CMake modules
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 # Binary files we compile
 add_subdirectory("bin")
+
+# Documentation
+add_subdirectory("doc")
 
 # Libraries we link against
 add_subdirectory("lib")
