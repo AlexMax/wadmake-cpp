@@ -19,6 +19,7 @@
 #ifndef LUA_HH
 #define LUA_HH
 
+#include <iosfwd>
 #include <memory>
 #include <string>
 #include <stdexcept>
@@ -46,8 +47,11 @@ class LuaEnvironment {
 public:
 	LuaEnvironment();
 	void dofile(const char* filename);
+	void dostring(const std::string& str, const char* name);
 	void dostring(const char* str);
 	LuaState* getState(); // Test-only
+	int gettop();
+	std::ostream& writeStack(std::ostream& buffer);
 };
 
 class Lua {

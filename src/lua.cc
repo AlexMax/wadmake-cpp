@@ -50,12 +50,14 @@ LuaEnvironment::LuaEnvironment() {
 	if (luaL_loadbuffer(this->lua, (char*)init_lua, init_lua_len, "init") != LUA_OK) {
 		std::stringstream error;
 		error << "internal lua error" << std::endl << lua_tostring(this->lua, -1);
+		lua_pop(this->lua, 1);
 		throw std::runtime_error(error.str());
 	}
 
 	if (lua_pcall(this->lua, 0, LUA_MULTRET, 0) != LUA_OK) {
 		std::stringstream error;
 		error << "internal lua runtime error" << std::endl << lua_tostring(this->lua, -1);
+		lua_pop(this->lua, 1);
 		throw std::runtime_error(error.str());
 	}
 }
@@ -64,6 +66,23 @@ void LuaEnvironment::dofile(const char* filename) {
 	if (luaL_dofile(this->lua, filename) == 1) {
 		std::stringstream error;
 		error << "runtime error" << std::endl << lua_tostring(this->lua, -1);
+		lua_pop(this->lua, 1);
+		throw std::runtime_error(error.str());
+	}
+}
+
+void LuaEnvironment::dostring(const std::string& str, const char* name) {
+	if (luaL_loadbuffer(this->lua, str.data(), str.size(), name) != LUA_OK) {
+		std::stringstream error;
+		error << "lua error: " << lua_tostring(this->lua, -1);
+		lua_pop(this->lua, 1);
+		throw std::runtime_error(error.str());
+	}
+
+	if (lua_pcall(this->lua, 0, LUA_MULTRET, 0) != LUA_OK) {
+		std::stringstream error;
+		error << "lua runtime error: " << lua_tostring(this->lua, -1);
+		lua_pop(this->lua, 1);
 		throw std::runtime_error(error.str());
 	}
 }
@@ -72,8 +91,24 @@ void LuaEnvironment::dostring(const char* str) {
 	if (luaL_dostring(this->lua, str) == 1) {
 		std::stringstream error;
 		error << "runtime error" << std::endl << lua_tostring(this->lua, -1);
+		lua_pop(this->lua, 1);
 		throw std::runtime_error(error.str());
 	}
+}
+
+int LuaEnvironment::gettop() {
+	return lua_gettop(this->lua);
+}
+
+std::ostream& LuaEnvironment::writeStack(std::ostream& buffer) {
+	for (int i = 1;i <= lua_gettop(this->lua);i++) {
+		if (i > 1) {
+			buffer << ", ";
+		}
+		buffer << Lua::checklstring(this->lua, i);
+	}
+	lua_settop(this->lua, 0);
+	return buffer;
 }
 
 std::string Lua::checklstring(lua_State* L, int arg) {
