@@ -27,7 +27,7 @@ int main() {
 		const char* filename = "wadmake.lua";
 
 		LuaEnvironment lua;
-		lua.dofile(filename);
+		lua.doFile(filename);
 
 		return EXIT_SUCCESS;
 	} catch (std::exception& e) {

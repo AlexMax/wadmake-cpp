@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <stdexcept>
+#include <vector>
 
 #include <lua.h>
 #include <lualib.h>
@@ -46,9 +47,9 @@ class LuaEnvironment {
 	LuaState lua;
 public:
 	LuaEnvironment();
-	void dofile(const char* filename);
-	void dostring(const std::string& str, const char* name);
-	void dostring(const char* str);
+	void doFile(const char* filename);
+	void doBuffer(const char* str, size_t len, const char* name);
+	void doString(const std::string& str, const char* name);
 	LuaState* getState(); // Test-only
 	int gettop();
 	std::ostream& writeStack(std::ostream& buffer);

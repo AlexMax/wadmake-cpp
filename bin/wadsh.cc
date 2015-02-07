@@ -17,11 +17,34 @@
  */
 
 #include <iostream>
+#include <sstream>
 
 #include "lua.hh"
 
 int main(int argc, char** argv) {
 	LuaEnvironment lua;
+
+	if (argc > 1) {
+		if (std::strcmp(argv[1], "-") == 0) {
+			try {
+				std::stringstream input;
+				input << std::cin.rdbuf();
+				lua.doString(input.str(), "stdin");
+			} catch (const std::runtime_error& e) {
+				std::cerr << e.what() << std::endl;
+				return EXIT_FAILURE;
+			}
+		} else {
+			try {
+				lua.doFile(argv[1]);
+			} catch (const std::runtime_error& e) {
+				std::cerr << e.what() << std::endl;
+				return EXIT_FAILURE;
+			}
+		}
+
+		return EXIT_SUCCESS;
+	}
 
 	std::cerr << "WADmake shell" << std::endl;
 #ifdef _WIN32
@@ -41,7 +64,7 @@ int main(int argc, char** argv) {
 		}
 
 		try {
-			lua.dostring(line, "stdin");
+			lua.doString(line, "stdin");
 			if (lua.gettop() != 0) {
 				std::cout << "<- ";
 				lua.writeStack(std::cout) << std::endl;
@@ -50,4 +73,6 @@ int main(int argc, char** argv) {
 			std::cerr << e.what() << std::endl;
 		}
 	}
+
+	return EXIT_SUCCESS;
 }

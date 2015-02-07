@@ -62,17 +62,8 @@ LuaEnvironment::LuaEnvironment() {
 	}
 }
 
-void LuaEnvironment::dofile(const char* filename) {
-	if (luaL_dofile(this->lua, filename) == 1) {
-		std::stringstream error;
-		error << "runtime error" << std::endl << lua_tostring(this->lua, -1);
-		lua_pop(this->lua, 1);
-		throw std::runtime_error(error.str());
-	}
-}
-
-void LuaEnvironment::dostring(const std::string& str, const char* name) {
-	if (luaL_loadbuffer(this->lua, str.data(), str.size(), name) != LUA_OK) {
+void LuaEnvironment::doFile(const char* filename) {
+	if (luaL_loadfile(this->lua, filename) != LUA_OK) {
 		std::stringstream error;
 		error << "lua error: " << lua_tostring(this->lua, -1);
 		lua_pop(this->lua, 1);
@@ -87,10 +78,33 @@ void LuaEnvironment::dostring(const std::string& str, const char* name) {
 	}
 }
 
-void LuaEnvironment::dostring(const char* str) {
-	if (luaL_dostring(this->lua, str) == 1) {
+void LuaEnvironment::doBuffer(const char* str, size_t len, const char* name) {
+	if (luaL_loadbuffer(this->lua, str, len , name) != LUA_OK) {
 		std::stringstream error;
-		error << "runtime error" << std::endl << lua_tostring(this->lua, -1);
+		error << "lua error: " << lua_tostring(this->lua, -1);
+		lua_pop(this->lua, 1);
+		throw std::runtime_error(error.str());
+	}
+
+	if (lua_pcall(this->lua, 0, LUA_MULTRET, 0) != LUA_OK) {
+		std::stringstream error;
+		error << "lua runtime error: " << lua_tostring(this->lua, -1);
+		lua_pop(this->lua, 1);
+		throw std::runtime_error(error.str());
+	}
+}
+
+void LuaEnvironment::doString(const std::string& str, const char* name) {
+	if (luaL_loadbuffer(this->lua, str.data(), str.size(), name) != LUA_OK) {
+		std::stringstream error;
+		error << "lua error: " << lua_tostring(this->lua, -1);
+		lua_pop(this->lua, 1);
+		throw std::runtime_error(error.str());
+	}
+
+	if (lua_pcall(this->lua, 0, LUA_MULTRET, 0) != LUA_OK) {
+		std::stringstream error;
+		error << "lua runtime error: " << lua_tostring(this->lua, -1);
 		lua_pop(this->lua, 1);
 		throw std::runtime_error(error.str());
 	}

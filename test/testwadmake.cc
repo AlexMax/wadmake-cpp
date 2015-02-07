@@ -100,7 +100,7 @@ TEST_CASE("Environment should handle panics as exceptions", "[lua]") {
 
 TEST_CASE("Lumps can be created from scratch", "[lwad]") {
 	LuaEnvironment lua;
-	lua.dostring("return wad.createLumps()");
+	lua.doString("return wad.createLumps()", "test");
 
 	LuaState* L = lua.getState();
 	REQUIRE(luaL_checkudata(*L, -1, "Lumps") != NULL);
@@ -109,7 +109,7 @@ TEST_CASE("Lumps can be created from scratch", "[lwad]") {
 
 TEST_CASE("Lumps can be created from data", "[lwad]") {
 	LuaEnvironment lua;
-	lua.dostring("return wad.openwad('moo2d.wad')");
+	lua.doString("return wad.openwad('moo2d.wad')", "test");
 
 	LuaState* L = lua.getState();
 
@@ -120,7 +120,7 @@ TEST_CASE("Lumps can be created from data", "[lwad]") {
 
 TEST_CASE("Test Lumps:find()", "[lwad]") {
 	LuaEnvironment lua;
-	lua.dostring("return wad.openwad('moo2d.wad')");
+	lua.doString("return wad.openwad('moo2d.wad')", "test");
 
 	LuaState* L = lua.getState();
 	SECTION("Find a lump index") {
@@ -182,7 +182,7 @@ TEST_CASE("Test Lumps:find()", "[lwad]") {
 
 TEST_CASE("Test Lumps:get()", "[lwad]") {
 	LuaEnvironment lua;
-	lua.dostring("return wad.openwad('moo2d.wad')");
+	lua.doString("return wad.openwad('moo2d.wad')", "test");
 
 	LuaState* L = lua.getState();
 
@@ -198,7 +198,7 @@ TEST_CASE("Test Lumps:get()", "[lwad]") {
 
 TEST_CASE("Test Lumps:insert()", "[lwad]") {
 	LuaEnvironment lua;
-	lua.dostring("return wad.openwad('moo2d.wad')");
+	lua.doString("return wad.openwad('moo2d.wad')", "test");
 
 	LuaState* L = lua.getState();
 
@@ -223,7 +223,7 @@ TEST_CASE("Test Lumps:insert()", "[lwad]") {
 
 TEST_CASE("Test Lumps:set()", "[lwad]") {
 	LuaEnvironment lua;
-	lua.dostring("return wad.openwad('moo2d.wad')");
+	lua.doString("return wad.openwad('moo2d.wad')", "test");
 
 	LuaState* L = lua.getState();
 
