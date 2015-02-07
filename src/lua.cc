@@ -47,7 +47,7 @@ LuaEnvironment::LuaEnvironment() {
 	luaL_requiref(this->lua, "wad", luaopen_wad, 1);
 	lua_pop(this->lua, 5);
 
-	if (luaL_loadbuffer(this->lua, (char*)src_lua_init_lua, src_lua_init_lua_len, "init") != LUA_OK) {
+	if (luaL_loadbuffer(this->lua, (char*)init_lua, init_lua_len, "init") != LUA_OK) {
 		std::stringstream error;
 		error << "internal lua error" << std::endl << lua_tostring(this->lua, -1);
 		throw std::runtime_error(error.str());
