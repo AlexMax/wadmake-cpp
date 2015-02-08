@@ -53,18 +53,19 @@ static int wad_readwad(lua_State* L) {
 	Wad wad;
 	buffer_stream >> wad;
 
-	// WAD type
-	Wad::Type wad_type = wad.getType();
-	if (wad_type == Wad::Type::IWAD) {
-		lua_pushstring(L, "iwad");
-	} else if (wad_type == Wad::Type::PWAD) {
-		lua_pushstring(L, "pwad");
-	}
-
 	// Lump data
 	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
 	*ptr = new Directory(wad.getLumps());
 	luaL_setmetatable(L, WADmake::META_LUMPS);
+
+	// WAD type
+	Wad::Type wad_type = wad.getType();
+	if (wad_type == Wad::Type::IWAD) {
+		lua_pushstring(L, "iwad");
+	}
+	else if (wad_type == Wad::Type::PWAD) {
+		lua_pushstring(L, "pwad");
+	}
 
 	return 2;
 }

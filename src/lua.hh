@@ -52,7 +52,7 @@ public:
 	void doFile(const char* filename);
 	void doBuffer(const char* str, size_t len, const char* name);
 	void doString(const std::string& str, const char* name);
-	LuaState* getState(); // Test-only
+	lua_State* getState(); // Test-only
 	int gettop();
 	std::ostream& writeStack(std::ostream& buffer);
 };
