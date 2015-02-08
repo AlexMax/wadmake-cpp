@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <includedir>
+        <dir name="lib/lua-5.3.0/src/"/>
+        <dir name="lib/zlib-1.2.8/"/>
+    </includedir>
+    <paths>
+        <dir name="src"/>
+        <dir name="bin"/>
+    </paths>
+</project>

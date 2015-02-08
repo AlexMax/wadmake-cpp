@@ -257,7 +257,7 @@ void Zip::parseCentralDirectory(std::istream& buffer) {
 	}
 
 	// Filename
-	std::string filename = ReadString(buffer, filename_len);
+	ReadString(buffer, filename_len);
 
 	// Extra field
 	ReadBuffer(buffer, extra_len);
@@ -340,6 +340,8 @@ std::istream& operator>>(std::istream& buffer, Zip& zip) {
 
 	return buffer;
 }
+
+Zip::Zip() : filesize(0) { }
 
 const Directory& Zip::getLumps() {
 	return this->lumps;

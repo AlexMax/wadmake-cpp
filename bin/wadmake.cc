@@ -23,11 +23,10 @@
 #include "lua.hh"
 
 int main() {
-	const char* filename = "wadmake.lua";
 	WADmake::LuaEnvironment lua;
 
 	try {
-		lua.doFile(filename);
+		lua.doFile("wadmake.lua");
 	} catch (std::exception& e) {
 		std::cerr << "wadmake: " << e.what() << std::endl;
 		return EXIT_FAILURE;

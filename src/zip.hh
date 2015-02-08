@@ -33,6 +33,7 @@ class Zip {
 	void parseEndCentralDirectory(std::istream& buffer);
 public:
 	enum Compression : uint16_t { STORE = 0, DEFLATE = 8 };
+	Zip();
 	const Directory& getLumps();
 	friend std::istream& operator>>(std::istream& buffer, Zip& zip);
 };
