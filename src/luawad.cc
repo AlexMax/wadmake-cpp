@@ -30,7 +30,7 @@ namespace WADmake {
 
 #include "luawad.lua.hh"
 
-static const char META_LUMPS[] = "LUMPS";
+static const char META_LUMPS[] = "Lumps";
 
 // Create an empty Lumps userdata
 static int wad_createLumps(lua_State* L) {
@@ -289,19 +289,28 @@ static const luaL_Reg wad_functions[] = {
 
 // Initialize the wad package
 int luaopen_wad(lua_State* L) {
-	luaL_newlib(L, wad_functions);
+	// Fetch functions we created in Lua
+	Lua::doBuffer(L, reinterpret_cast<char*>(luawad_lua), luawad_lua_len, "luawad.lua (internal)");
+	// [wadfuncs][Lumpsfuncs]
 
 	// Create "Lumps" userdata
 	luaL_newmetatable(L, WADmake::META_LUMPS);
+	// [wadfuncs][Lumpsfuncs][Lumpsmeta]
 	lua_pushvalue(L, -1);
+	// [wadfuncs][Lumpsfuncs][Lumpsmeta][Lumpsmeta]
 	lua_setfield(L, -2, "__index");
+	// [wadfuncs][Lumpsfuncs][Lumpsmeta]
 	luaL_setfuncs(L, ulumps_functions, 0);
-	lua_pop(L, 1);
-
-	// Attach functions written in Lua to package
-	luaL_loadbuffer(L, (char*)luawad_lua, luawad_lua_len, "lwad");
-	lua_pcall(L, 0, LUA_MULTRET, 0);
 	Lua::settfuncs(L, -2);
+	lua_pop(L, 2);
+	// [wadfuncs]
+
+	// Create "wad" package
+	luaL_newlib(L, wad_functions);
+	// [wadfuncs][wadlib]
+	Lua::settfuncs(L, -2);
+	lua_remove(L, -2);
+	// [wadlib]
 
 	return 1;
 }

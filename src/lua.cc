@@ -46,8 +46,9 @@ LuaEnvironment::LuaEnvironment() {
 	luaL_requiref(this->lua, LUA_IOLIBNAME, luaopen_io, 1);
 	luaL_requiref(this->lua, LUA_LOADLIBNAME, luaopen_package, 1);
 	luaL_requiref(this->lua, LUA_STRLIBNAME, luaopen_string, 1);
+	luaL_requiref(this->lua, LUA_TABLIBNAME, luaopen_table, 1);
 	luaL_requiref(this->lua, "wad", luaopen_wad, 1);
-	lua_pop(this->lua, 5);
+	lua_pop(this->lua, 6);
 
 	if (luaL_loadbuffer(this->lua, (char*)init_lua, init_lua_len, "init") != LUA_OK) {
 		std::stringstream error;
@@ -137,23 +138,38 @@ std::string Lua::checkstring(lua_State* L, int arg) {
 	return std::string(luaL_checkstring(L, arg));
 }
 
-// Registers all functions in the table on top of the stack to the table
-// pointed to by index.  Pops the table of functions off the stack.
-void Lua::settfuncs(lua_State* L, int index) {
-	// [tfuncs]
-	lua_pushnil(L);
-	// [tfuncs][nil]
-	while (lua_next(L, -2) != 0) {
-		// [tfuncs][key][value]
-		lua_pushvalue(L, -2);
-		// [tfuncs][key][value][key]
-		lua_insert(L, -2);
-		// [tfuncs][key][key][value]
-		lua_settable(L, index - 3);
-		// [tfuncs][key]
+void Lua::doBuffer(lua_State* L, const char* str, size_t len, const char* name) {
+	if (luaL_loadbuffer(L, str, len, name) != LUA_OK) {
+		std::stringstream error;
+		error << "lua error: " << lua_tostring(L, -1);
+		lua_pop(L, 1);
+		throw std::runtime_error(error.str());
 	}
-	// [tfuncs]
-	lua_pop(L, 1);
+
+	if (lua_pcall(L, 0, LUA_MULTRET, 0) != LUA_OK) {
+		std::stringstream error;
+		error << "lua runtime error: " << lua_tostring(L, -1);
+		lua_pop(L, 1);
+		throw std::runtime_error(error.str());
+	}
+}
+
+// Registers all functions in the table pointed to by index to the table
+// on top of the stack.
+void Lua::settfuncs(lua_State* L, int index) {
+	// [dest]
+	lua_pushnil(L);
+	// [dest][nil]
+	while (lua_next(L, index - 1) != 0) {
+		// [dest][fname][func]
+		lua_pushvalue(L, -2);
+		// [dest][fname][func][fname]
+		lua_insert(L, -2);
+		// [dest][fname][fname][func]
+		lua_settable(L, -4);
+		// [dest][fname]
+	}
+	// [dest]
 }
 
 std::string Lua::tolstring(lua_State* L, int index) {
