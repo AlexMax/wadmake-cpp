@@ -43,20 +43,49 @@ TEST_CASE("ReadString can read into string given a stream and length", "[bit]") 
 
 TEST_CASE("ReadUInt16LE can read 16-bit Little Endian integers", "[bit]") {
 	std::stringstream buffer;
-	buffer << "\xFF\xFE";
-	REQUIRE(ReadUInt16LE(buffer) == 65279);
+	buffer << "\xFE\xFF";
+	REQUIRE(ReadUInt16LE(buffer) == 0xFFFE);
+}
+
+TEST_CASE("WriteUInt16LE can write 16-bit Little Endian integers", "[bit]") {
+	std::stringstream buffer;
+	WriteUInt16LE(buffer, 0xFFFE);
+	REQUIRE(buffer.str()[0] == '\xFE');
+	REQUIRE(buffer.str()[1] == '\xFF');
 }
 
 TEST_CASE("ReadUInt32LE can read 32-bit Little Endian integers", "[bit]") {
 	std::stringstream buffer;
-	buffer << "\xFF\xFE\xFD\xFC";
-	REQUIRE(ReadUInt32LE(buffer) == 4244504319);
+	buffer << "\xFC\xFD\xFE\xFF";
+	REQUIRE(ReadUInt32LE(buffer) == 0xFFFEFDFC);
+}
+
+TEST_CASE("WriteUInt32LE can write 32-bit Little Endian integers", "[bit]") {
+	std::stringstream buffer;
+	WriteUInt32LE(buffer, 0xFFFEFDFC);
+	REQUIRE(buffer.str()[0] == '\xFC');
+	REQUIRE(buffer.str()[1] == '\xFD');
+	REQUIRE(buffer.str()[2] == '\xFE');
+	REQUIRE(buffer.str()[3] == '\xFF');
 }
 
 TEST_CASE("ReadUInt64LE can read 64-bit Little Endian integers", "[bit]") {
 	std::stringstream buffer;
-	buffer << "\xFF\xFE\xFD\xFC\xFB\xFA\xF9\xF8";
-	REQUIRE(ReadUInt64LE(buffer) == 18446744073659088639ull);
+	buffer << "\xF8\xF9\xFA\xFB\xFC\xFD\xFE\xFF";
+	REQUIRE(ReadUInt64LE(buffer) == 0xFFFEFDFCFBFAF9F8);
+}
+
+TEST_CASE("WriteUInt64LE can write 64-bit Little Endian integers", "[bit]") {
+	std::stringstream buffer;
+	WriteUInt64LE(buffer, 0xFFFEFDFCFBFAF9F8);
+	REQUIRE(buffer.str()[0] == '\xF8');
+	REQUIRE(buffer.str()[1] == '\xF9');
+	REQUIRE(buffer.str()[2] == '\xFA');
+	REQUIRE(buffer.str()[3] == '\xFB');
+	REQUIRE(buffer.str()[4] == '\xFC');
+	REQUIRE(buffer.str()[5] == '\xFD');
+	REQUIRE(buffer.str()[6] == '\xFE');
+	REQUIRE(buffer.str()[7] == '\xFF');
 }
 
 TEST_CASE("Wad can construct from buffer", "[wad]") {

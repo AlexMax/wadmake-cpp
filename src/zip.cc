@@ -311,6 +311,12 @@ void Zip::parseEndCentralDirectory(std::istream& buffer) {
 	}
 }
 
+Zip::Zip() : filesize(0) { }
+
+const Directory& Zip::getLumps() {
+	return this->lumps;
+}
+
 std::istream& operator>>(std::istream& buffer, Zip& zip) {
 	// Ensure our buffer is big enough to be a ZIP file
 	buffer.seekg(0, buffer.end);
@@ -341,10 +347,8 @@ std::istream& operator>>(std::istream& buffer, Zip& zip) {
 	return buffer;
 }
 
-Zip::Zip() : filesize(0) { }
-
-const Directory& Zip::getLumps() {
-	return this->lumps;
+std::ostream& operator<<(std::ostream& buffer, Zip& zip) {
+	return buffer;
 }
 
 }

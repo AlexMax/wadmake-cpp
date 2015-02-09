@@ -36,6 +36,7 @@ public:
 	Zip();
 	const Directory& getLumps();
 	friend std::istream& operator>>(std::istream& buffer, Zip& zip);
+	friend std::ostream& operator<<(std::ostream& buffer, Zip& zip);
 };
 
 }
