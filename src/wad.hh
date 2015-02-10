@@ -30,8 +30,8 @@ class Lump {
 	std::string name;
 	std::string data;
 public:
-	const std::string& getName();
-	const std::string& getData();
+	const std::string getName() const;
+	const std::string getData() const;
 	void setName(std::string&& name);
 	void setData(std::string&& name);
 	void setData(std::vector<char>&& data);
@@ -41,6 +41,8 @@ class Directory {
 	std::vector<Lump> index;
 public:
 	Lump& at(size_t n);
+	std::vector<Lump>::const_iterator Directory::begin();
+	std::vector<Lump>::const_iterator Directory::end();
 	void erase_at(size_t index);
 	std::tuple<bool, size_t> find_index(const std::string& name, size_t start);
 	void insert_at(size_t index, Lump&& lump);
@@ -53,9 +55,11 @@ public:
 	enum class Type { NONE, IWAD, PWAD };
 	Wad();
 	Wad(Wad::Type type);
-	Wad::Type getType();
 	const Directory& getLumps();
+	Wad::Type getType();
+	void setLumps(Directory& lump);
 	friend std::istream& operator>>(std::istream& buffer, Wad& wad);
+	friend std::ostream& operator<<(std::ostream& buffer, Wad& wad);
 private:
 	Type type;
 	Directory lumps;

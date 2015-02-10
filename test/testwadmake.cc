@@ -284,4 +284,18 @@ TEST_CASE("Test Lumps:set()", "[luawad]") {
 	}
 }
 
+TEST_CASE("Test Lumps:writewad()", "[luawad]") {
+	LuaEnvironment lua;
+	lua.doString("x = wad.openwad('moo2d.wad');y = x:writewad('pwad');z = wad.readwad(y)", "test");
+
+	lua_State* L = lua.getState();
+
+	SECTION("See if we can successfully read the WAD data we output") {
+		luaL_dostring(L, "return z:get(1)");
+
+		REQUIRE(Lua::checkstring(L, -2) == "MAP01");
+		REQUIRE(Lua::checkstring(L, -1) == "");
+	}
+}
+
 }

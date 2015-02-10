@@ -239,6 +239,22 @@ static int ulumps_set(lua_State* L) {
 	return 0;
 }
 
+// Write out a WAD file
+// FIXME: Horrific hack with substituting pointers, figure out a better way to do this
+static int ulumps_writewad(lua_State* L) {
+	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
+
+	Wad wad(Wad::Type::PWAD);
+	wad.setLumps(*ptr);
+
+	std::stringstream output;
+	output << wad;
+
+	std::string outstr = output.str();
+	lua_pushlstring(L, outstr.data(), outstr.size());
+	return 1;
+}
+
 // Garbage-collect Lumps
 static int ulumps_gc(lua_State* L) {
 	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
@@ -274,6 +290,7 @@ static const luaL_Reg ulumps_functions[] = {
 	{"insert", ulumps_insert},
 	{"remove", ulumps_remove},
 	{"set", ulumps_set},
+	{"writewad", ulumps_writewad},
 	{"__gc", ulumps_gc},
 	{"__len", ulumps_len},
 	{"__tostring", ulumps_tostring},
