@@ -28,12 +28,20 @@ namespace WADmake {
 
 std::string ReadString(std::istream& buffer, size_t len);
 std::vector<char> ReadBuffer(std::istream& buffer, size_t len);
+int8_t ReadInt8(std::istream& buffer);
+void WriteInt8(std::ostream& buffer, int8_t data);
 uint8_t ReadUInt8(std::istream& buffer);
 void WriteUInt8(std::ostream& buffer, uint8_t data);
+int16_t ReadInt16LE(std::istream& buffer);
+void WriteInt16LE(std::ostream& buffer, int16_t data);
 uint16_t ReadUInt16LE(std::istream& buffer);
 void WriteUInt16LE(std::ostream& buffer, uint16_t data);
+int32_t ReadInt32LE(std::istream& buffer);
+void WriteInt32LE(std::ostream& buffer, int32_t data);
 uint32_t ReadUInt32LE(std::istream& buffer);
 void WriteUInt32LE(std::ostream& buffer, uint32_t data);
+int64_t ReadInt64LE(std::istream& buffer);
+void WriteInt64LE(std::ostream& buffer, int64_t data);
 uint64_t ReadUInt64LE(std::istream& buffer);
 void WriteUInt64LE(std::ostream& buffer, uint64_t data);
 
