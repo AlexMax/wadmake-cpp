@@ -21,6 +21,7 @@
 #include <cstring>
 #include <stdexcept>
 
+#include "buffer.hh"
 #include "wad.hh"
 
 namespace WADmake {
@@ -83,27 +84,18 @@ Wad::Wad() : type(Wad::Type::NONE) { }
 Wad::Wad(Wad::Type type) : type(type) { }
 
 std::istream& operator>>(std::istream& buffer, Wad& wad) {
-	char identifier[4];
-	int32_t numlumps, infotablefs;
-
 	// WAD identifier
-	if (!buffer.read(identifier, sizeof(identifier))) {
-		throw std::out_of_range("Couldn't read WAD identifier");
-	}
-
-	if (std::strncmp(identifier, "IWAD", 4) == 0) {
+	std::vector<char> identifier = ReadBuffer(buffer, 4);
+	if (std::memcmp(identifier.data(), "IWAD", identifier.size()) == 0) {
 		wad.type = Wad::Type::IWAD;
-	} else if (std::strncmp(identifier,"PWAD", 4) == 0) {
+	} else if (std::memcmp(identifier.data(), "PWAD", identifier.size()) == 0) {
 		wad.type = Wad::Type::PWAD;
 	} else {
 		throw std::logic_error("Invalid WAD identifier");
 	}
 
 	// Number of lumps
-	if (!buffer.read(reinterpret_cast<char*>(&numlumps), sizeof(numlumps))) {
-		throw std::out_of_range("Couldn't read number of lumps");
-	}
-
+	int32_t numlumps = ReadInt32LE(buffer);
 	if (numlumps < 0) {
 		std::stringstream error;
 		error << "Too many lumps in WAD (found " << numlumps << ", max " << INT32_MAX << ")";
@@ -111,10 +103,7 @@ std::istream& operator>>(std::istream& buffer, Wad& wad) {
 	}
 
 	// Infotable pointer
-	if (!buffer.read(reinterpret_cast<char*>(&infotablefs), sizeof(infotablefs))) {
-		throw std::out_of_range("Couldn't read infotable location");
-	}
-
+	int32_t infotablefs = ReadInt32LE(buffer);
 	if (infotablefs < 0) {
 		throw std::out_of_range("Position of infotable is out of range");
 	}
@@ -125,27 +114,12 @@ std::istream& operator>>(std::istream& buffer, Wad& wad) {
 
 	for (int32_t i = 0;i < numlumps;i++) {
 		// Read a directory entry
-		int32_t filepos, size;
-		std::vector<char> name(9);
+		int32_t filepos = ReadInt32LE(buffer);
+		int32_t size = ReadInt32LE(buffer);
 
-		if (!buffer.read(reinterpret_cast<char*>(&filepos), sizeof(filepos))) {
-			std::stringstream error;
-			error << "Couldn't read file position of lump " << i;
-			throw std::out_of_range(error.str());
-		}
-
-		if (!buffer.read(reinterpret_cast<char*>(&size), sizeof(size))) {
-			std::stringstream error;
-			error << "Couldn't read size of lump " << i;
-			throw std::out_of_range(error.str());
-		}
-
-		if (!buffer.read(name.data(), 8)) {
-			std::stringstream error;
-			error << "Couldn't read name of lump " << i;
-			throw std::out_of_range(error.str());
-		}
-		name[8] = '\0';
+		// Read name
+		std::vector<char> name = ReadBuffer(buffer, 8);
+		name.push_back(0);
 		std::string namestring(name.data());
 
 		// Create lump
@@ -162,10 +136,8 @@ std::istream& operator>>(std::istream& buffer, Wad& wad) {
 			}
 
 			auto info = buffer.tellg();
-			std::vector<char> data(size);
-
 			buffer.seekg(filepos);
-			buffer.read(data.data(), size);
+			std::vector<char> data = ReadBuffer(buffer, size);
 			buffer.seekg(info);
 
 			lump.setData(std::move(data));
