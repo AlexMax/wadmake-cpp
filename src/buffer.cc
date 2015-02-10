@@ -92,8 +92,8 @@ int16_t ReadInt16LE(std::istream& buffer) {
 
 void WriteInt16LE(std::ostream& buffer, int16_t data) {
 	uint8_t raw[sizeof(int16_t)];
-	raw[0] = data & 0x00FF;
-	raw[1] = data >> 8;
+	raw[0] = static_cast<uint8_t>(data & 0x00FF);
+	raw[1] = static_cast<uint8_t>(data >> 8);
 	if (!buffer.write(reinterpret_cast<char*>(raw), sizeof(raw))) {
 		throw std::runtime_error("Couldn't write int16_t to stream");
 	}
@@ -110,8 +110,8 @@ uint16_t ReadUInt16LE(std::istream& buffer) {
 
 void WriteUInt16LE(std::ostream& buffer, uint16_t data) {
 	uint8_t raw[sizeof(uint16_t)];
-	raw[0] = data & 0x00FF;
-	raw[1] = data >> 8;
+	raw[0] = static_cast<uint8_t>(data & 0x00FF);
+	raw[1] = static_cast<uint8_t>(data >> 8);
 	if (!buffer.write(reinterpret_cast<char*>(raw), sizeof(raw))) {
 		throw std::runtime_error("Couldn't write uint16_t to stream");
 	}
@@ -128,10 +128,10 @@ int32_t ReadInt32LE(std::istream& buffer) {
 
 void WriteInt32LE(std::ostream& buffer, int32_t data) {
 	uint8_t raw[sizeof(int32_t)];
-	raw[0] = (data & 0x000000FF);
-	raw[1] = (data & 0x0000FF00) >> 8;
-	raw[2] = (data & 0x00FF0000) >> 16;
-	raw[3] = data >> 24;
+	raw[0] = static_cast<uint8_t>(data & 0x000000FF);
+	raw[1] = static_cast<uint8_t>((data & 0x0000FF00) >> 8);
+	raw[2] = static_cast<uint8_t>((data & 0x00FF0000) >> 16);
+	raw[3] = static_cast<uint8_t>(data >> 24);
 	if (!buffer.write(reinterpret_cast<char*>(raw), sizeof(raw))) {
 		throw std::runtime_error("Couldn't write int32_t to stream");
 	}
@@ -148,10 +148,10 @@ uint32_t ReadUInt32LE(std::istream& buffer) {
 
 void WriteUInt32LE(std::ostream& buffer, uint32_t data) {
 	uint8_t raw[sizeof(uint32_t)];
-	raw[0] = (data & 0x000000FF);
-	raw[1] = (data & 0x0000FF00) >> 8;
-	raw[2] = (data & 0x00FF0000) >> 16;
-	raw[3] = data >> 24;
+	raw[0] = static_cast<uint8_t>(data & 0x000000FF);
+	raw[1] = static_cast<uint8_t>((data & 0x0000FF00) >> 8);
+	raw[2] = static_cast<uint8_t>((data & 0x00FF0000) >> 16);
+	raw[3] = static_cast<uint8_t>(data >> 24);
 	if (!buffer.write(reinterpret_cast<char*>(raw), sizeof(raw))) {
 		throw std::runtime_error("Couldn't write uint32_t to stream");
 	}
@@ -175,14 +175,14 @@ int64_t ReadInt64LE(std::istream& buffer) {
 
 void WriteInt64LE(std::ostream& buffer, int64_t data) {
 	uint8_t raw[sizeof(int64_t)];
-	raw[0] = (data & 0x00000000000000FF);
-	raw[1] = (data & 0x000000000000FF00) >> 8;
-	raw[2] = (data & 0x0000000000FF0000) >> 16;
-	raw[3] = (data & 0x00000000FF000000) >> 24;
-	raw[4] = (data & 0x000000FF00000000) >> 32;
-	raw[5] = (data & 0x0000FF0000000000) >> 40;
-	raw[6] = (data & 0x00FF000000000000) >> 48;
-	raw[7] = data >> 56;
+	raw[0] = static_cast<uint8_t>(data & 0x00000000000000FF);
+	raw[1] = static_cast<uint8_t>((data & 0x000000000000FF00) >> 8);
+	raw[2] = static_cast<uint8_t>((data & 0x0000000000FF0000) >> 16);
+	raw[3] = static_cast<uint8_t>((data & 0x00000000FF000000) >> 24);
+	raw[4] = static_cast<uint8_t>((data & 0x000000FF00000000) >> 32);
+	raw[5] = static_cast<uint8_t>((data & 0x0000FF0000000000) >> 40);
+	raw[6] = static_cast<uint8_t>((data & 0x00FF000000000000) >> 48);
+	raw[7] = static_cast<uint8_t>(data >> 56);
 	if (!buffer.write(reinterpret_cast<char*>(raw), sizeof(raw))) {
 		throw std::runtime_error("Couldn't write int64_t to stream");
 	}
@@ -206,14 +206,14 @@ uint64_t ReadUInt64LE(std::istream& buffer) {
 
 void WriteUInt64LE(std::ostream& buffer, uint64_t data) {
 	uint8_t raw[sizeof(uint64_t)];
-	raw[0] = (data & 0x00000000000000FF);
-	raw[1] = (data & 0x000000000000FF00) >> 8;
-	raw[2] = (data & 0x0000000000FF0000) >> 16;
-	raw[3] = (data & 0x00000000FF000000) >> 24;
-	raw[4] = (data & 0x000000FF00000000) >> 32;
-	raw[5] = (data & 0x0000FF0000000000) >> 40;
-	raw[6] = (data & 0x00FF000000000000) >> 48;
-	raw[7] = data >> 56;
+	raw[0] = static_cast<uint8_t>(data & 0x00000000000000FF);
+	raw[1] = static_cast<uint8_t>((data & 0x000000000000FF00) >> 8);
+	raw[2] = static_cast<uint8_t>((data & 0x0000000000FF0000) >> 16);
+	raw[3] = static_cast<uint8_t>((data & 0x00000000FF000000) >> 24);
+	raw[4] = static_cast<uint8_t>((data & 0x000000FF00000000) >> 32);
+	raw[5] = static_cast<uint8_t>((data & 0x0000FF0000000000) >> 40);
+	raw[6] = static_cast<uint8_t>((data & 0x00FF000000000000) >> 48);
+	raw[7] = static_cast<uint8_t>(data >> 56);
 	if (!buffer.write(reinterpret_cast<char*>(raw), sizeof(raw))) {
 		throw std::runtime_error("Couldn't write uint64_t to stream");
 	}
