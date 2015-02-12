@@ -191,7 +191,7 @@ void Zip::parseLocalFile(std::istream& buffer) {
 		throw std::runtime_error("CRC check failed");
 	}
 
-	this->lumps.push_back(std::move(lump));
+	this->lumps->push_back(std::move(lump));
 }
 
 // Parse a Central Directory entry.  Assumes the buffer is set to the
@@ -311,9 +311,9 @@ void Zip::parseEndCentralDirectory(std::istream& buffer) {
 	}
 }
 
-Zip::Zip() : filesize(0) { }
+Zip::Zip() : filesize(0), lumps(new Directory) { }
 
-const Directory& Zip::getLumps() {
+std::shared_ptr<Directory> Zip::getLumps() {
 	return this->lumps;
 }
 

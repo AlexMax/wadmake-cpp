@@ -18,6 +18,7 @@
 
 #include <cstring>
 #include <exception>
+#include <sstream>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -34,8 +35,8 @@ static const char META_LUMPS[] = "Lumps";
 
 // Create an empty Lumps userdata
 static int wad_createLumps(lua_State* L) {
-	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
-	*ptr = new Directory();
+	auto ptr = static_cast<std::shared_ptr<Directory>*>(lua_newuserdata(L, sizeof(std::shared_ptr<Directory>)));
+	new(ptr) std::shared_ptr<Directory>(new Directory());
 	luaL_setmetatable(L, WADmake::META_LUMPS);
 	return 1;
 }
@@ -54,8 +55,8 @@ static int wad_readwad(lua_State* L) {
 	buffer_stream >> wad;
 
 	// Lump data
-	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
-	*ptr = new Directory(wad.getLumps());
+	auto ptr = static_cast<std::shared_ptr<Directory>*>(lua_newuserdata(L, sizeof(std::shared_ptr<Directory>)));
+	new(ptr) std::shared_ptr<Directory>(wad.getLumps());
 	luaL_setmetatable(L, WADmake::META_LUMPS);
 
 	// WAD type
@@ -84,8 +85,8 @@ static int wad_readzip(lua_State* L) {
 	buffer_stream >> zip;
 
 	// Lump data
-	Directory** ptr = (Directory**)lua_newuserdata(L, sizeof(Directory*));
-	*ptr = new Directory(zip.getLumps());
+	auto ptr = static_cast<std::shared_ptr<Directory>*>(lua_newuserdata(L, sizeof(std::shared_ptr<Directory>)));
+	new(ptr) std::shared_ptr<Directory>(zip.getLumps());
 	luaL_setmetatable(L, WADmake::META_LUMPS);
 
 	return 1;
@@ -93,7 +94,7 @@ static int wad_readzip(lua_State* L) {
 
 // Find a lump with a given name
 static int ulumps_find(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
+	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 
 	std::string name = Lua::checkstring(L, 2);
 
@@ -136,7 +137,7 @@ static int ulumps_find(lua_State* L) {
 
 // Get a lump at a particular position (1-indexed)
 static int ulumps_get(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
+	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 
 	size_t index = luaL_checkinteger(L, 2);
 	if (index < 1 || index > ptr->size()) {
@@ -155,7 +156,7 @@ static int ulumps_get(lua_State* L) {
 
 // Insert a new lump into a particular position (1-indexed)
 static int ulumps_insert(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
+	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 
 	if (lua_isinteger(L, 2)) {
 		// Second parameter is index to push to
@@ -183,7 +184,7 @@ static int ulumps_insert(lua_State* L) {
 
 // Remove a lump from a particular position
 static int ulumps_remove(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
+	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 	size_t index = luaL_checkinteger(L, 2);
 	if (index < 1 || index > ptr->size()) {
 		luaL_argerror(L, 2, "index out of range");
@@ -194,7 +195,7 @@ static int ulumps_remove(lua_State* L) {
 
 // Set a lump at a particular position (1-indexed)
 static int ulumps_set(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
+	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 
 	// Second parameter is index to push into
 	size_t index = luaL_checkinteger(L, 2);
@@ -242,10 +243,10 @@ static int ulumps_set(lua_State* L) {
 // Write out a WAD file
 // FIXME: Horrific hack with substituting pointers, figure out a better way to do this
 static int ulumps_writewad(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
+	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 
 	Wad wad(Wad::Type::PWAD);
-	wad.setLumps(*ptr);
+//	wad.setLumps(*ptr);
 
 	std::stringstream output;
 	output << wad;
@@ -257,28 +258,26 @@ static int ulumps_writewad(lua_State* L) {
 
 // Garbage-collect Lumps
 static int ulumps_gc(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
-	if (ptr) {
-		delete ptr;
-	}
+	auto ptr = static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
+	ptr->~shared_ptr();
 	return 0;
 }
 
 // Return the length of the Lumps
 static int ulumps_len(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
+	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 	lua_pushinteger(L, ptr->size());
 	return 1;
 }
 
 // Print Lumps as a string
 static int ulumps_tostring(lua_State* L) {
-	Directory* ptr = *(Directory**)luaL_checkudata(L, 1, WADmake::META_LUMPS);
+	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 	size_t size = ptr->size();
 	if (size == 1) {
-		lua_pushfstring(L, "%s: %p, %d lump", WADmake::META_LUMPS, ptr, ptr->size());
+		lua_pushfstring(L, "%s: %p, %d lump", WADmake::META_LUMPS, ptr.get(), ptr->size());
 	} else {
-		lua_pushfstring(L, "%s: %p, %d lumps", WADmake::META_LUMPS,ptr, ptr->size());
+		lua_pushfstring(L, "%s: %p, %d lumps", WADmake::META_LUMPS,ptr.get(), ptr->size());
 	}
 	return 1;
 }

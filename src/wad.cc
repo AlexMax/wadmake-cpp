@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <sstream>
 #include <stdexcept>
 
 #include "buffer.hh"
@@ -87,16 +88,16 @@ void Directory::push_back(Lump&& lump) {
 	this->index.push_back(std::move(lump));
 }
 
-Wad::Wad() : type(Wad::Type::NONE) { }
+Wad::Wad() : type(Wad::Type::NONE), lumps(new Directory) { }
 
-Wad::Wad(Wad::Type type) : type(type) { }
+Wad::Wad(Wad::Type type) : type(type), lumps(new Directory) { }
 
-const Directory& Wad::getLumps() {
+std::shared_ptr<Directory> Wad::getLumps() {
 	return this->lumps;
 }
 
-void Wad::setLumps(Directory& lump) {
-	this->lumps = lump;
+void Wad::setLumps(Directory&& lump) {
+	this->lumps = std::make_shared<Directory>(std::move(lump));
 }
 
 Wad::Type Wad::getType() {
@@ -170,7 +171,7 @@ std::istream& operator>>(std::istream& buffer, Wad& wad) {
 			throw std::out_of_range(error.str());
 		}
 
-		wad.lumps.push_back(std::move(lump));
+		wad.lumps->push_back(std::move(lump));
 	}
 
 	return buffer;
@@ -187,14 +188,14 @@ std::ostream& operator<<(std::ostream& buffer, Wad& wad) {
 	}
 	
 	// Write number of lumps
-	if (wad.lumps.size() > std::numeric_limits<int32_t>::max()) {
+	if (wad.lumps->size() > std::numeric_limits<int32_t>::max()) {
 		throw std::runtime_error("Too many lumps");
 	}
 
 	std::stringstream alldata;
 	std::stringstream infotable;
 
-	std::for_each(wad.lumps.begin(), wad.lumps.end(), [&alldata, &infotable](const Lump& lump) {
+	std::for_each(wad.lumps->begin(), wad.lumps->end(), [&alldata, &infotable](const Lump& lump) {
 		std::string data = lump.getData();
 
 		// Write lump position

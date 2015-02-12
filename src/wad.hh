@@ -19,7 +19,8 @@
 #ifndef WAD_HH
 #define WAD_HH
 
-#include <sstream>
+#include <iosfwd>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -55,14 +56,14 @@ public:
 	enum class Type { NONE, IWAD, PWAD };
 	Wad();
 	Wad(Wad::Type type);
-	const Directory& getLumps();
+	std::shared_ptr<Directory> getLumps();
 	Wad::Type getType();
-	void setLumps(Directory& lump);
+	void setLumps(Directory&& lump);
 	friend std::istream& operator>>(std::istream& buffer, Wad& wad);
 	friend std::ostream& operator<<(std::ostream& buffer, Wad& wad);
 private:
 	Type type;
-	Directory lumps;
+	std::shared_ptr<Directory> lumps;
 };
 
 }

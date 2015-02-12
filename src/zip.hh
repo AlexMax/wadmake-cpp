@@ -27,14 +27,14 @@ namespace WADmake {
 
 class Zip {
 	size_t filesize;
-	Directory lumps;
+	std::shared_ptr<Directory> lumps;
 	void parseLocalFile(std::istream& buffer);
 	void parseCentralDirectory(std::istream& buffer);
 	void parseEndCentralDirectory(std::istream& buffer);
 public:
 	enum Compression : uint16_t { STORE = 0, DEFLATE = 8 };
 	Zip();
-	const Directory& getLumps();
+	std::shared_ptr<Directory> getLumps();
 	friend std::istream& operator>>(std::istream& buffer, Zip& zip);
 	friend std::ostream& operator<<(std::ostream& buffer, Zip& zip);
 };
