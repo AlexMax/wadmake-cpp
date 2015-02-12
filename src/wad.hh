@@ -41,8 +41,8 @@ class Directory {
 	std::vector<Lump> index;
 public:
 	Lump& at(size_t n);
-	std::vector<Lump>::const_iterator Directory::begin();
-	std::vector<Lump>::const_iterator Directory::end();
+	std::vector<Lump>::const_iterator begin();
+	std::vector<Lump>::const_iterator end();
 	void erase_at(size_t index);
 	std::tuple<bool, size_t> find_index(const std::string& name, size_t start);
 	void insert_at(size_t index, Lump&& lump);
