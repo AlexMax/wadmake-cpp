@@ -19,11 +19,9 @@
 #ifndef LUA_HH
 #define LUA_HH
 
-#include <iosfwd>
-#include <memory>
-#include <string>
 #include <stdexcept>
-#include <vector>
+#include <string>
+#include <memory>
 
 #include <lua.h>
 #include <lualib.h>

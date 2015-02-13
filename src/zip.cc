@@ -16,15 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cstring>
-#include <limits>
-#include <new>
 #include <sstream>
-#include <stdexcept>
 
 #include <zlib.h>
 
 #include "buffer.hh"
+#include "directory.hh"
 #include "zip.hh"
 
 namespace WADmake {

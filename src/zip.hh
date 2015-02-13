@@ -20,6 +20,8 @@
 #define ZIP_HH
 
 #include <cstdint>
+#include <iosfwd>
+#include <memory>
 
 #include "wad.hh"
 

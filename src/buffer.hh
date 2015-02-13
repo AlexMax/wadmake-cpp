@@ -20,7 +20,6 @@
 #define BUFFER_HH
 
 #include <cstdint>
-#include <iosfwd>
 #include <string>
 #include <vector>
 

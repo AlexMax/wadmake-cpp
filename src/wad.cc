@@ -17,76 +17,12 @@
  */
 
 #include <algorithm>
-#include <cstdint>
-#include <cstring>
 #include <sstream>
-#include <stdexcept>
 
 #include "buffer.hh"
 #include "wad.hh"
 
 namespace WADmake {
-
-const std::string Lump::getName() const {
-	return this->name;
-}
-
-const std::string Lump::getData() const {
-	return this->data;
-}
-
-void Lump::setName(std::string&& name) {
-	this->name = std::move(name);
-}
-
-void Lump::setData(std::string&& data) {
-	this->data = std::move(data);
-}
-
-void Lump::setData(std::vector<char>&& data) {
-	this->data = std::string(std::begin(data), std::end(data));
-}
-
-size_t Directory::size() {
-	return this->index.size();
-}
-
-Lump& Directory::at(size_t n) {
-	return this->index.at(n);
-}
-
-std::vector<Lump>::const_iterator Directory::begin() {
-	return this->index.begin();
-}
-
-std::vector<Lump>::const_iterator Directory::end() {
-	return this->index.end();
-}
-
-void Directory::erase_at(size_t index) {
-	std::vector<Lump>::iterator it = this->index.begin();
-	this->index.erase(it + index);
-}
-
-std::tuple<bool, size_t> Directory::find_index(const std::string& name, size_t start) {
-	std::vector<Lump>::iterator result = std::find_if(this->index.begin() + start, this->index.end(), [name](Lump lump) {
-		return name == lump.getName();
-	});
-	if (result == this->index.end()) {
-		return std::make_tuple(false, 0);
-	} else {
-		return std::make_tuple(true, result - this->index.begin());
-	}
-}
-
-void Directory::insert_at(size_t index, Lump&& lump) {
-	std::vector<Lump>::iterator it = this->index.begin();
-	this->index.insert(it + index, std::move(lump));
-}
-
-void Directory::push_back(Lump&& lump) {
-	this->index.push_back(std::move(lump));
-}
 
 Wad::Wad() : type(Wad::Type::NONE), lumps(new Directory) { }
 
