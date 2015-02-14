@@ -284,7 +284,6 @@ TEST_CASE("Test Lumps:set()", "[luawad]") {
 	}
 }
 
-/*
 TEST_CASE("Test Lumps:writewad()", "[luawad]") {
 	LuaEnvironment lua;
 	lua.doString("x = wad.openwad('moo2d.wad');y = x:writewad('pwad');z = wad.readwad(y)", "test");
@@ -298,6 +297,5 @@ TEST_CASE("Test Lumps:writewad()", "[luawad]") {
 		REQUIRE(Lua::checkstring(L, -1) == "");
 	}
 }
-*/
 
 }

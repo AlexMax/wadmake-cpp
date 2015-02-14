@@ -33,7 +33,8 @@ public:
 	Wad(Wad::Type type);
 	std::shared_ptr<Directory> getLumps();
 	Wad::Type getType();
-	void setLumps(Directory&& lump);
+	void setLumps(const std::shared_ptr<Directory>& lumps);
+	void setLumps(Directory&& lumps);
 	friend std::istream& operator>>(std::istream& buffer, Wad& wad);
 	friend std::ostream& operator<<(std::ostream& buffer, Wad& wad);
 private:

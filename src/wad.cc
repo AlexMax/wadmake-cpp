@@ -33,8 +33,12 @@ std::shared_ptr<Directory> Wad::getLumps() {
 	return this->lumps;
 }
 
-void Wad::setLumps(Directory&& lump) {
-	this->lumps = std::make_shared<Directory>(std::move(lump));
+void Wad::setLumps(const std::shared_ptr<Directory>& lumps) {
+	this->lumps = lumps;
+}
+
+void Wad::setLumps(Directory&& lumps) {
+	this->lumps = std::make_shared<Directory>(std::move(lumps));
 }
 
 Wad::Type Wad::getType() {
@@ -51,7 +55,7 @@ std::istream& operator>>(std::istream& buffer, Wad& wad) {
 		wad.type = Wad::Type::PWAD;
 	}
 	else {
-		throw std::logic_error("Invalid WAD identifier");
+		throw std::runtime_error("Invalid WAD identifier");
 	}
 
 	// Number of lumps
@@ -123,7 +127,7 @@ std::ostream& operator<<(std::ostream& buffer, Wad& wad) {
 	} else {
 		throw std::runtime_error("Can't write Wad of type NONE");
 	}
-	
+
 	// Write number of lumps
 	if (wad.lumps->size() > std::numeric_limits<int32_t>::max()) {
 		throw std::runtime_error("Too many lumps");
@@ -156,6 +160,9 @@ std::ostream& operator<<(std::ostream& buffer, Wad& wad) {
 		std::memmove(namebuffer, name.c_str(), name.size());
 		infotable.write(namebuffer, sizeof(namebuffer));
 	});
+
+	// Write number of lumps
+	WriteInt32LE(buffer, wad.lumps->size());
 
 	// Write offset of infotable
 	WriteInt32LE(buffer, alldata.tellp() + static_cast<std::char_traits<char>::pos_type>(12));

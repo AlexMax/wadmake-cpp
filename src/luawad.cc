@@ -50,7 +50,11 @@ static int wad_readwad(lua_State* L) {
 
 	// Stream the data into Wad class to get our WAD type and lumps.
 	Wad wad;
-	buffer_stream >> wad;
+	try {
+		buffer_stream >> wad;
+	} catch (const std::runtime_error& e) {
+		return luaL_error(L, e.what());
+	}
 
 	// Lump data
 	auto ptr = static_cast<std::shared_ptr<Directory>*>(lua_newuserdata(L, sizeof(std::shared_ptr<Directory>)));
@@ -80,7 +84,11 @@ static int wad_readzip(lua_State* L) {
 
 	// Stream the data into Zip class to get our lumps.
 	Zip zip;
-	buffer_stream >> zip;
+	try {
+		buffer_stream >> zip;
+	} catch (const std::runtime_error& e) {
+		return luaL_error(L, e.what());
+	}
 
 	// Lump data
 	auto ptr = static_cast<std::shared_ptr<Directory>*>(lua_newuserdata(L, sizeof(std::shared_ptr<Directory>)));
@@ -244,10 +252,14 @@ static int ulumps_writewad(lua_State* L) {
 	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 
 	Wad wad(Wad::Type::PWAD);
-//	wad.setLumps(*ptr);
+	wad.setLumps(ptr);
 
 	std::stringstream output;
-	output << wad;
+	try {
+		output << wad;
+	} catch (const std::runtime_error& e) {
+		return luaL_error(L, e.what());
+	}
 
 	std::string outstr = output.str();
 	lua_pushlstring(L, outstr.data(), outstr.size());
