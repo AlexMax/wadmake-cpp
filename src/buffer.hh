@@ -26,6 +26,7 @@
 namespace WADmake {
 
 std::string ReadString(std::istream& buffer, size_t len);
+void WriteString(std::ostream& buffer, const std::string& str);
 std::vector<char> ReadBuffer(std::istream& buffer, size_t len);
 int8_t ReadInt8(std::istream& buffer);
 void WriteInt8(std::ostream& buffer, int8_t data);

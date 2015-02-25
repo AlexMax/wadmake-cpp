@@ -39,6 +39,18 @@ std::string ReadString(std::istream& buffer, size_t len) {
 	return std::string(result.begin(), result.end());
 }
 
+void WriteString(std::ostream& buffer, const std::string& str) {
+	if (str.size() == 0) {
+		return;
+	}
+
+	if (!buffer.write(str.data(), str.size())) {
+		std::stringstream err;
+		err << "Couldn't write " << str.size() << " bytes to stream";
+		throw std::runtime_error(err.str());
+	}
+}
+
 std::vector<char> ReadBuffer(std::istream& buffer, size_t len) {
 	if (len == 0) {
 		return std::vector<char>();

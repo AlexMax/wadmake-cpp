@@ -111,13 +111,25 @@ static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_l
 	return std::string(output.str());
 }
 
+// Header for Local File
+const char Zip::localFileHeader[] = { 'P', 'K', 0x03, 0x04 };
+
+// Header for Central Directory
+const char Zip::centralDirectoryHeader[] = { 'P', 'K', 0x01, 0x02 };
+
+// Header for End of Central Directory
+const char Zip::endOfCentralDirectoryHeader[] = { 'P', 'K', 0x05, 0x06 };
+
+// Version of ZIP standards that Zip obeys
+const uint16_t Zip::version = 8;
+
 // Parse a local file entry.  Assumes the buffer is set to the location
 // of the local file entry's magic number.
 void Zip::parseLocalFile(std::istream& buffer) {
 	// Identifier
 	std::vector<char> identifier = ReadBuffer(buffer, 4);
-	if (std::memcmp(identifier.data(), "PK\x03\x04", identifier.size()) != 0) {
-		throw std::runtime_error("Not a valid central directory entry");
+	if (std::memcmp(identifier.data(), Zip::localFileHeader, identifier.size()) != 0) {
+		throw std::runtime_error("Not a valid local file entry");
 	}
 
 	// Version needed to extract
@@ -127,10 +139,10 @@ void Zip::parseLocalFile(std::istream& buffer) {
 	ReadUInt16LE(buffer);
 
 	// Compression method
-	Zip::Compression compression = static_cast<Zip::Compression>(ReadUInt16LE(buffer));
+	Zip::compression compression = static_cast<Zip::compression>(ReadUInt16LE(buffer));
 	switch (compression) {
-	case Zip::Compression::STORE:
-	case Zip::Compression::DEFLATE:
+	case Zip::compression::STORE:
+	case Zip::compression::DEFLATE:
 		break;
 	default:
 		throw std::runtime_error("Unsupported compression");
@@ -169,10 +181,10 @@ void Zip::parseLocalFile(std::istream& buffer) {
 
 	if (compressed_size > 0) {
 		switch (compression) {
-		case Zip::Compression::STORE:
+		case Zip::compression::STORE:
 			lump.setData(ReadBuffer(buffer, compressed_size));
 			break;
-		case Zip::Compression::DEFLATE:
+		case Zip::compression::DEFLATE:
 			lump.setData(zlibInflate(buffer, compressed_size, uncompressed_size));
 			break;
 		default:
@@ -198,7 +210,7 @@ void Zip::parseLocalFile(std::istream& buffer) {
 void Zip::parseCentralDirectory(std::istream& buffer) {
 	// Identifier
 	std::vector<char> identifier = ReadBuffer(buffer, 4);
-	if (std::memcmp(identifier.data(), "PK\x01\x02", identifier.size()) != 0) {
+	if (std::memcmp(identifier.data(), Zip::centralDirectoryHeader, identifier.size()) != 0) {
 		throw std::runtime_error("Not a valid central directory entry");
 	}
 
@@ -331,7 +343,7 @@ std::istream& operator>>(std::istream& buffer, Zip& zip) {
 
 	for (;;) {
 		std::vector<char> identifier = ReadBuffer(buffer, 4);
-		if (std::memcmp(identifier.data(), "PK\x05\x06", identifier.size()) == 0) {
+		if (std::memcmp(identifier.data(), Zip::endOfCentralDirectoryHeader, identifier.size()) == 0) {
 			zip.parseEndCentralDirectory(buffer);
 			break;
 		}
@@ -347,6 +359,99 @@ std::istream& operator>>(std::istream& buffer, Zip& zip) {
 }
 
 std::ostream& operator<<(std::ostream& buffer, Zip& zip) {
+	std::stringstream localFiles;
+	std::stringstream centralDirectory;
+	std::stringstream endOfCentralDirectory;
+
+	for (Lump lump : *(zip.lumps)) {
+		std::string name = lump.getName();
+		std::string data = lump.getData();
+
+		// Store local file position so we can write it later
+		auto filepos = localFiles.tellg();
+
+		// Headers
+		localFiles.write(Zip::localFileHeader, sizeof(Zip::localFileHeader));
+		centralDirectory.write(Zip::centralDirectoryHeader, sizeof(Zip::centralDirectoryHeader));
+
+		// Version made by (only in Central Directory)
+		WriteUInt16LE(centralDirectory, Zip::version);
+
+		// Version needed to extract
+		WriteUInt16LE(localFiles, Zip::version);
+		WriteUInt16LE(centralDirectory, Zip::version);
+
+		// General purpose bitflag
+		WriteUInt16LE(localFiles, 0);
+		WriteUInt16LE(centralDirectory, 0);
+
+		// Compression method
+		WriteUInt16LE(localFiles, Zip::compression::DEFLATE);
+		WriteUInt16LE(centralDirectory, Zip::compression::DEFLATE);
+
+		// Last modified file time
+		WriteUInt16LE(localFiles, 0);
+		WriteUInt16LE(centralDirectory, 0);
+
+		// Last modified file date
+		WriteUInt16LE(localFiles, 0);
+		WriteUInt16LE(centralDirectory, 0);
+
+		// CRC32
+		if (data.size() > std::numeric_limits<uInt>::max()) {
+			throw std::runtime_error("Lump is too big for CRC check");
+		}
+		uint32_t crc = crc32(0, reinterpret_cast<const Bytef*>(data.data()), static_cast<uInt>(data.size()));
+		WriteUInt32LE(localFiles, crc);
+		WriteUInt32LE(centralDirectory, crc);
+
+		// Compressed size
+		WriteUInt32LE(localFiles, 0);
+		WriteUInt32LE(centralDirectory, 0);
+
+		// Uncompressed size
+		if (data.size() > std::numeric_limits<uint32_t>::max()) {
+			throw std::runtime_error("Lump " + name + " is too large");
+		}
+		WriteUInt32LE(localFiles, static_cast<uint32_t>(data.size()));
+		WriteUInt32LE(centralDirectory, static_cast<uint32_t>(data.size()));
+
+		// Filename length
+		if (name.size() > std::numeric_limits<uint16_t>::max()) {
+			throw std::runtime_error("Lump name " + name + " is too large");
+		}
+		WriteUInt16LE(localFiles, static_cast<uint16_t>(name.size()));
+		WriteUInt16LE(centralDirectory, static_cast<uint16_t>(name.size()));
+
+		// Extra field length
+		WriteUInt16LE(localFiles, 0);
+		WriteUInt16LE(centralDirectory, 0);
+
+		// File comment length (only in Central Directory)
+		WriteUInt16LE(centralDirectory, 0);
+
+		// Disk number (only in Central Directory)
+		WriteUInt16LE(centralDirectory, 0);
+
+		// Internal file attibutes (only in Central Directory)
+		WriteUInt16LE(centralDirectory, 0);
+
+		// External file attibutes (only in Central Directory)
+		WriteUInt32LE(centralDirectory, 0);
+
+		// Local header location (only in Central Directory)
+		if (filepos > std::numeric_limits<uint32_t>::max()) {
+			throw std::runtime_error("Cannot write local header location of lump " + name);
+		}
+		WriteUInt32LE(centralDirectory, static_cast<uint32_t>(filepos));
+
+		// Filename
+		WriteString(localFiles, name);
+		WriteString(centralDirectory, name);
+
+		// Extra field & File comment (skipped)
+	}
+
 	return buffer;
 }
 

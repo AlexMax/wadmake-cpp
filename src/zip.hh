@@ -28,13 +28,18 @@
 namespace WADmake {
 
 class Zip {
+	static const char localFileHeader[];
+	static const char centralDirectoryHeader[];
+	static const char endOfCentralDirectoryHeader[];
+	static const uint16_t version;
+	static enum compression : uint16_t { STORE = 0, DEFLATE = 8 };
+
 	size_t filesize;
 	std::shared_ptr<Directory> lumps;
 	void parseLocalFile(std::istream& buffer);
 	void parseCentralDirectory(std::istream& buffer);
 	void parseEndCentralDirectory(std::istream& buffer);
 public:
-	enum Compression : uint16_t { STORE = 0, DEFLATE = 8 };
 	Zip();
 	std::shared_ptr<Directory> getLumps();
 	friend std::istream& operator>>(std::istream& buffer, Zip& zip);
