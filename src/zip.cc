@@ -36,6 +36,7 @@ static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_l
 	strm.avail_in = 0;
 	strm.zalloc = Z_NULL;
 	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
 
 	int success = inflateInit2(&strm, -MAX_WBITS);
 	switch (success) {
@@ -48,7 +49,7 @@ static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_l
 		case Z_STREAM_ERROR:
 			throw std::logic_error(strm.msg);
 		default:
-			break; // Do nothing
+			throw std::logic_error("Unable to initialize zlib");
 	}
 
 	// Input buffer
@@ -56,59 +57,103 @@ static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_l
 	if (!buffer.read(data_in.data(), data_in.size())) {
 		throw std::out_of_range("Couldn't read buffer to infliate");
 	}
-
-	// Output buffer
-	std::vector<char> data_out(out_len);
-	std::stringstream output;
-
 	if (data_in.size() > std::numeric_limits<uInt>::max()) {
 		throw std::out_of_range("Input buffer too large");
 	}
 	strm.avail_in = static_cast<uInt>(data_in.size());
 	strm.next_in = reinterpret_cast<Bytef*>(data_in.data());
 
+	// Output buffer
+	std::vector<char> data_out(out_len);
 	if (data_in.size() > std::numeric_limits<uInt>::max()) {
 		throw std::out_of_range("Output buffer too large");
 	}
 	strm.avail_out = static_cast<uInt>(data_out.size());
 	strm.next_out = reinterpret_cast<Bytef*>(data_out.data());
 
-	for (;;) {
-		// Read a little bit out of the buffer
-		success = inflate(&strm, Z_SYNC_FLUSH);
-		switch (success) {
-			case Z_OK:
-			case Z_STREAM_END:
-				break;
-			case Z_NEED_DICT:
-				throw std::runtime_error("Preset dictionary required");
-			case Z_DATA_ERROR:
-				throw std::runtime_error("Buffer corrupted");
-			case Z_STREAM_ERROR:
-				throw std::runtime_error("Stream state corrupted");
-			case Z_MEM_ERROR:
-				throw std::bad_alloc();
-			case Z_BUF_ERROR:
-				throw std::runtime_error("Inflation progress impossible");
-			default:
-				throw std::runtime_error(strm.msg);
-		}
-
-		if (success == Z_STREAM_END) {
-			// We're done!
-			output.write(data_out.data(), data_out.size() - strm.avail_out);
+	// Uncompress the entire buffer
+	success = inflate(&strm, Z_FINISH);
+	switch (success) {
+		case Z_OK:
+			throw std::runtime_error("Incomplete inflation");
+		case Z_STREAM_END:
 			break;
-		} else {
-			// More stuff to process.
-			output.write(data_out.data(), data_out.size());
-			strm.avail_out = static_cast<uInt>(data_out.size());
-			strm.next_out = reinterpret_cast<Bytef*>(data_out.data());
-		}
+		case Z_NEED_DICT:
+			throw std::runtime_error("Preset dictionary required");
+		case Z_DATA_ERROR:
+			throw std::runtime_error("Buffer corrupted");
+		case Z_STREAM_ERROR:
+			throw std::runtime_error("Stream state corrupted");
+		case Z_MEM_ERROR:
+			throw std::bad_alloc();
+		case Z_BUF_ERROR:
+			throw std::runtime_error("Inflation progress impossible");
+		default:
+			throw std::runtime_error(strm.msg);
 	}
+
+	std::string output(data_out.begin(), data_out.end());
 
 	inflateEnd(&strm);
 
-	return std::string(output.str());
+	return output;
+}
+
+static void zlibDeflate(std::ostream& buffer, const std::string& str) {
+	z_stream strm;
+
+	// Initialize inflate state
+	strm.next_in = Z_NULL;
+	strm.avail_in = 0;
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+
+	int success = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+	                           -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+	switch (success) {
+		case Z_OK:
+			break; // Do nothing
+		case Z_MEM_ERROR:
+			throw std::bad_alloc();
+		case Z_VERSION_ERROR:
+			throw std::logic_error("Incompatible zlib version");
+		case Z_STREAM_ERROR:
+			throw std::logic_error(strm.msg);
+		default:
+			throw std::logic_error("Unable to initialize zlib");
+	}
+
+	// Input buffer
+	if (str.size() > std::numeric_limits<uInt>::max()) {
+		throw std::out_of_range("Input buffer too large");
+	}
+	strm.avail_in = static_cast<uInt>(str.size());
+	strm.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(str.data()));
+
+	// Output buffer
+	std::vector<char> data_out(deflateBound(&strm, str.size()));
+	strm.avail_out = static_cast<uInt>(data_out.size());
+	strm.next_out = reinterpret_cast<Bytef*>(data_out.data());
+
+	// Compress the entire buffer
+	success = deflate(&strm, Z_FINISH);
+	switch (success) {
+	case Z_OK:
+		throw std::runtime_error("Incomplete deflation");
+	case Z_STREAM_END:
+		break;
+	case Z_STREAM_ERROR:
+		throw std::runtime_error("Stream state corrupted");
+	case Z_BUF_ERROR:
+		throw std::runtime_error("Deflation progress impossible");
+	default:
+		throw std::runtime_error(strm.msg);
+	}
+
+	buffer.write(reinterpret_cast<char*>(data_out.data()), strm.total_out);
+
+	deflateEnd(&strm);
 }
 
 // Header for Local File
@@ -359,42 +404,52 @@ std::istream& operator>>(std::istream& buffer, Zip& zip) {
 }
 
 std::ostream& operator<<(std::ostream& buffer, Zip& zip) {
-	std::stringstream localFiles;
 	std::stringstream centralDirectory;
-	std::stringstream endOfCentralDirectory;
 
+	// Write every lump out as a local file (with header) and the
+	// central directory header
 	for (Lump lump : *(zip.lumps)) {
 		std::string name = lump.getName();
 		std::string data = lump.getData();
 
+		// Compress ahead of time
+		std::stringstream compressed;
+		zlibDeflate(compressed, data);
+
+		// Did we actually save any space?
+		Zip::compression compression = Zip::compression::STORE;
+		if (static_cast<size_t>(compressed.tellp()) <= data.size()) {
+			compression = Zip::compression::DEFLATE;
+		}
+
 		// Store local file position so we can write it later
-		auto filepos = localFiles.tellg();
+		auto filepos = buffer.tellp();
 
 		// Headers
-		localFiles.write(Zip::localFileHeader, sizeof(Zip::localFileHeader));
+		buffer.write(Zip::localFileHeader, sizeof(Zip::localFileHeader));
 		centralDirectory.write(Zip::centralDirectoryHeader, sizeof(Zip::centralDirectoryHeader));
 
 		// Version made by (only in Central Directory)
 		WriteUInt16LE(centralDirectory, Zip::version);
 
 		// Version needed to extract
-		WriteUInt16LE(localFiles, Zip::version);
+		WriteUInt16LE(buffer, Zip::version);
 		WriteUInt16LE(centralDirectory, Zip::version);
 
 		// General purpose bitflag
-		WriteUInt16LE(localFiles, 0);
+		WriteUInt16LE(buffer, 0);
 		WriteUInt16LE(centralDirectory, 0);
 
 		// Compression method
-		WriteUInt16LE(localFiles, Zip::compression::DEFLATE);
-		WriteUInt16LE(centralDirectory, Zip::compression::DEFLATE);
+		WriteUInt16LE(buffer, compression);
+		WriteUInt16LE(centralDirectory, compression);
 
 		// Last modified file time
-		WriteUInt16LE(localFiles, 0);
+		WriteUInt16LE(buffer, 0);
 		WriteUInt16LE(centralDirectory, 0);
 
 		// Last modified file date
-		WriteUInt16LE(localFiles, 0);
+		WriteUInt16LE(buffer, 0);
 		WriteUInt16LE(centralDirectory, 0);
 
 		// CRC32
@@ -402,29 +457,34 @@ std::ostream& operator<<(std::ostream& buffer, Zip& zip) {
 			throw std::runtime_error("Lump is too big for CRC check");
 		}
 		uint32_t crc = crc32(0, reinterpret_cast<const Bytef*>(data.data()), static_cast<uInt>(data.size()));
-		WriteUInt32LE(localFiles, crc);
+		WriteUInt32LE(buffer, crc);
 		WriteUInt32LE(centralDirectory, crc);
 
 		// Compressed size
-		WriteUInt32LE(localFiles, 0);
-		WriteUInt32LE(centralDirectory, 0);
+		if (compression == Zip::compression::DEFLATE) {
+			WriteUInt32LE(buffer, compressed.tellp());
+			WriteUInt32LE(centralDirectory, compressed.tellp());
+		} else {
+			WriteUInt32LE(buffer, data.size());
+			WriteUInt32LE(centralDirectory, data.size());
+		}
 
 		// Uncompressed size
 		if (data.size() > std::numeric_limits<uint32_t>::max()) {
 			throw std::runtime_error("Lump " + name + " is too large");
 		}
-		WriteUInt32LE(localFiles, static_cast<uint32_t>(data.size()));
+		WriteUInt32LE(buffer, static_cast<uint32_t>(data.size()));
 		WriteUInt32LE(centralDirectory, static_cast<uint32_t>(data.size()));
 
 		// Filename length
 		if (name.size() > std::numeric_limits<uint16_t>::max()) {
 			throw std::runtime_error("Lump name " + name + " is too large");
 		}
-		WriteUInt16LE(localFiles, static_cast<uint16_t>(name.size()));
+		WriteUInt16LE(buffer, static_cast<uint16_t>(name.size()));
 		WriteUInt16LE(centralDirectory, static_cast<uint16_t>(name.size()));
 
 		// Extra field length
-		WriteUInt16LE(localFiles, 0);
+		WriteUInt16LE(buffer, 0);
 		WriteUInt16LE(centralDirectory, 0);
 
 		// File comment length (only in Central Directory)
@@ -446,11 +506,50 @@ std::ostream& operator<<(std::ostream& buffer, Zip& zip) {
 		WriteUInt32LE(centralDirectory, static_cast<uint32_t>(filepos));
 
 		// Filename
-		WriteString(localFiles, name);
+		WriteString(buffer, name);
 		WriteString(centralDirectory, name);
 
 		// Extra field & File comment (skipped)
+
+		// Write actual file data
+		if (compression == Zip::compression::DEFLATE) {
+			buffer << compressed.rdbuf();
+		} else {
+			buffer.write(data.data(), data.size());
+		}
 	}
+
+	// Keep track of the start of central directory position
+	auto cdoffset = buffer.tellp();
+
+	// Concatinate the central directory to the file
+	buffer << centralDirectory.rdbuf();
+
+	// Write the end of central directory header
+
+	// Header
+	buffer.write(Zip::endOfCentralDirectoryHeader, sizeof(Zip::endOfCentralDirectoryHeader));
+
+	// Disk number
+	WriteUInt16LE(buffer, 0);
+
+	// Disk number of central directory
+	WriteUInt16LE(buffer, 0);
+
+	// Central directory entries
+	WriteUInt16LE(buffer, zip.lumps->size());
+
+	// Total number of central directory entries
+	WriteUInt16LE(buffer, zip.lumps->size());
+
+	// Size of the central directory
+	WriteUInt32LE(buffer, centralDirectory.tellp());
+
+	// Offset of central directory
+	WriteUInt32LE(buffer, cdoffset);
+
+	// Comment length
+	WriteUInt16LE(buffer, 0);
 
 	return buffer;
 }

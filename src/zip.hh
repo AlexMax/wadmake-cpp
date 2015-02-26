@@ -32,7 +32,7 @@ class Zip {
 	static const char centralDirectoryHeader[];
 	static const char endOfCentralDirectoryHeader[];
 	static const uint16_t version;
-	static enum compression : uint16_t { STORE = 0, DEFLATE = 8 };
+	enum compression : uint16_t { STORE = 0, DEFLATE = 8 };
 
 	size_t filesize;
 	std::shared_ptr<Directory> lumps;

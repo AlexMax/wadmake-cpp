@@ -88,7 +88,7 @@ TEST_CASE("WriteUInt64LE can write 64-bit Little Endian integers", "[bit]") {
 	REQUIRE(buffer.str()[7] == '\xFF');
 }
 
-TEST_CASE("Wad can construct from buffer", "[wad]") {
+TEST_CASE("Wad can construct from istream, output to ostream, and read itself again", "[wad]") {
 	std::stringstream buffer;
 	std::ifstream moo2d_wad("moo2d.wad", std::fstream::in | std::fstream::binary);
 
@@ -97,9 +97,18 @@ TEST_CASE("Wad can construct from buffer", "[wad]") {
 
 	auto dir = moo2d.getLumps();
 	REQUIRE(dir->size() == 11);
+
+	buffer << moo2d;
+	buffer.seekg(0);
+
+	Wad moo2d_again(Wad::Type::NONE);
+	buffer >> moo2d_again;
+
+	auto dir_again = moo2d_again.getLumps();
+	REQUIRE(dir_again->size() == 11);
 }
 
-TEST_CASE("Zip can construct from buffer", "[zip]") {
+TEST_CASE("Zip can construct from istream, output to ostream, and read itself again", "[zip]") {
 	std::stringstream buffer;
 	std::ifstream duel32f_pk3("duel32f.pk3", std::fstream::in | std::fstream::binary);
 
@@ -107,6 +116,15 @@ TEST_CASE("Zip can construct from buffer", "[zip]") {
 	duel32f_pk3 >> duel32;
 
 	auto dir = duel32.getLumps();
+	REQUIRE(dir->size() == 369);
+
+	buffer << duel32;
+	buffer.seekg(0);
+
+	Zip duel32_again;
+	buffer >> duel32_again;
+
+	auto dir_again = duel32_again.getLumps();
 	REQUIRE(dir->size() == 369);
 }
 
