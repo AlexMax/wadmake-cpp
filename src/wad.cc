@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
 #include <cstring>
 #include <sstream>
 
@@ -128,15 +127,10 @@ std::ostream& operator<<(std::ostream& buffer, Wad& wad) {
 		throw std::runtime_error("Can't write Wad of type NONE");
 	}
 
-	// Write number of lumps
-	if (wad.lumps->size() > std::numeric_limits<int32_t>::max()) {
-		throw std::runtime_error("Too many lumps");
-	}
-
 	std::stringstream alldata;
 	std::stringstream infotable;
 
-	std::for_each(wad.lumps->begin(), wad.lumps->end(), [&alldata, &infotable](const Lump& lump) {
+	for (Lump lump : *(wad.lumps)) {
 		std::string data = lump.getData();
 
 		// Write lump position
@@ -159,10 +153,13 @@ std::ostream& operator<<(std::ostream& buffer, Wad& wad) {
 		char namebuffer[8] = { 0 };
 		std::memmove(namebuffer, name.c_str(), name.size());
 		infotable.write(namebuffer, sizeof(namebuffer));
-	});
+	}
 
 	// Write number of lumps
-	WriteInt32LE(buffer, wad.lumps->size());
+	if (wad.lumps->size() > std::numeric_limits<int32_t>::max()) {
+		throw std::runtime_error("Too many lumps");
+	}
+	WriteInt32LE(buffer, static_cast<int32_t>(wad.lumps->size()));
 
 	// Write offset of infotable
 	WriteInt32LE(buffer, alldata.tellp() + static_cast<std::char_traits<char>::pos_type>(12));

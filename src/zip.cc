@@ -132,7 +132,7 @@ static void zlibDeflate(std::ostream& buffer, const std::string& str) {
 	strm.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(str.data()));
 
 	// Output buffer
-	std::vector<char> data_out(deflateBound(&strm, str.size()));
+	std::vector<char> data_out(deflateBound(&strm, static_cast<uInt>(str.size())));
 	strm.avail_out = static_cast<uInt>(data_out.size());
 	strm.next_out = reinterpret_cast<Bytef*>(data_out.data());
 
@@ -462,11 +462,17 @@ std::ostream& operator<<(std::ostream& buffer, Zip& zip) {
 
 		// Compressed size
 		if (compression == Zip::compression::DEFLATE) {
-			WriteUInt32LE(buffer, compressed.tellp());
-			WriteUInt32LE(centralDirectory, compressed.tellp());
+			if (compressed.tellp() > std::numeric_limits<uint32_t>::max()) {
+				throw std::runtime_error("Lump " + name + " is too large");
+			}
+			WriteUInt32LE(buffer, static_cast<uint32_t>(compressed.tellp()));
+			WriteUInt32LE(centralDirectory, static_cast<uint32_t>(compressed.tellp()));
 		} else {
-			WriteUInt32LE(buffer, data.size());
-			WriteUInt32LE(centralDirectory, data.size());
+			if (data.size() > std::numeric_limits<uint32_t>::max()) {
+				throw std::runtime_error("Lump " + name + " is too large");
+			}
+			WriteUInt32LE(buffer, static_cast<uint32_t>(data.size()));
+			WriteUInt32LE(centralDirectory, static_cast<uint32_t>(data.size()));
 		}
 
 		// Uncompressed size
@@ -537,16 +543,25 @@ std::ostream& operator<<(std::ostream& buffer, Zip& zip) {
 	WriteUInt16LE(buffer, 0);
 
 	// Central directory entries
-	WriteUInt16LE(buffer, zip.lumps->size());
+	if (zip.lumps->size() > std::numeric_limits<uint16_t>::max()) {
+		throw std::runtime_error("Too many lumps");
+	}
+	WriteUInt16LE(buffer, static_cast<uint16_t>(zip.lumps->size()));
 
 	// Total number of central directory entries
-	WriteUInt16LE(buffer, zip.lumps->size());
+	WriteUInt16LE(buffer, static_cast<uint16_t>(zip.lumps->size()));
 
 	// Size of the central directory
-	WriteUInt32LE(buffer, centralDirectory.tellp());
+	if (centralDirectory.tellp() > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Central directory is too large");
+	}
+	WriteUInt32LE(buffer, static_cast<uint32_t>(centralDirectory.tellp()));
 
 	// Offset of central directory
-	WriteUInt32LE(buffer, cdoffset);
+	if (cdoffset > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Can't write central directory offset");
+	}
+	WriteUInt32LE(buffer, static_cast<uint32_t>(cdoffset));
 
 	// Comment length
 	WriteUInt16LE(buffer, 0);
