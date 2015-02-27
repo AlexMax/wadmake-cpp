@@ -28,29 +28,43 @@
 
 namespace WADmake {
 
-static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_len) {
+// Wrapper for inflation z_stream
+class inflateStream {
 	z_stream strm;
+public:
+	inflateStream() {
+		// Initialize inflate state
+		this->strm.next_in = Z_NULL;
+		this->strm.avail_in = 0;
+		this->strm.zalloc = Z_NULL;
+		this->strm.zfree = Z_NULL;
+		this->strm.opaque = Z_NULL;
 
-	// Initialize inflate state
-	strm.next_in = Z_NULL;
-	strm.avail_in = 0;
-	strm.zalloc = Z_NULL;
-	strm.zfree = Z_NULL;
-	strm.opaque = Z_NULL;
-
-	int success = inflateInit2(&strm, -MAX_WBITS);
-	switch (success) {
-		case Z_OK:
-			break; // Do nothing
-		case Z_MEM_ERROR:
-			throw std::bad_alloc();
-		case Z_VERSION_ERROR:
-			throw std::logic_error("Incompatible zlib version");
-		case Z_STREAM_ERROR:
-			throw std::logic_error(strm.msg);
-		default:
-			throw std::logic_error("Unable to initialize zlib");
+		int success = inflateInit2(&(this->strm), -MAX_WBITS);
+		switch (success) {
+			case Z_OK:
+				break; // Do nothing
+			case Z_MEM_ERROR:
+				throw std::bad_alloc();
+			case Z_VERSION_ERROR:
+				throw std::runtime_error("Incompatible zlib version");
+			case Z_STREAM_ERROR:
+				throw std::runtime_error(this->strm.msg);
+			default:
+				throw std::runtime_error("Unable to initialize zlib");
+		}
 	}
+	~inflateStream() {
+		inflateEnd(&(this->strm));
+	}
+	z_stream& getStream() {
+		return this->strm;
+	}
+};
+
+static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_len) {
+	inflateStream is;
+	z_stream strm = is.getStream();
 
 	// Input buffer
 	std::vector<char> data_in(in_len);
@@ -72,7 +86,7 @@ static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_l
 	strm.next_out = reinterpret_cast<Bytef*>(data_out.data());
 
 	// Uncompress the entire buffer
-	success = inflate(&strm, Z_FINISH);
+	int success = inflate(&strm, Z_FINISH);
 	switch (success) {
 		case Z_OK:
 			throw std::runtime_error("Incomplete inflation");
@@ -94,35 +108,47 @@ static std::string zlibInflate(std::istream& buffer, size_t in_len, size_t out_l
 
 	std::string output(data_out.begin(), data_out.end());
 
-	inflateEnd(&strm);
-
 	return output;
 }
 
-static void zlibDeflate(std::ostream& buffer, const std::string& str) {
+// Wrapper for inflation z_stream
+class deflateStream {
 	z_stream strm;
+public:
+	deflateStream() {
+		// Initialize inflate state
+		this->strm.next_in = Z_NULL;
+		this->strm.avail_in = 0;
+		this->strm.zalloc = Z_NULL;
+		this->strm.zfree = Z_NULL;
+		this->strm.opaque = Z_NULL;
 
-	// Initialize inflate state
-	strm.next_in = Z_NULL;
-	strm.avail_in = 0;
-	strm.zalloc = Z_NULL;
-	strm.zfree = Z_NULL;
-	strm.opaque = Z_NULL;
-
-	int success = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
-	                           -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
-	switch (success) {
-		case Z_OK:
-			break; // Do nothing
-		case Z_MEM_ERROR:
-			throw std::bad_alloc();
-		case Z_VERSION_ERROR:
-			throw std::logic_error("Incompatible zlib version");
-		case Z_STREAM_ERROR:
-			throw std::logic_error(strm.msg);
-		default:
-			throw std::logic_error("Unable to initialize zlib");
+		int success = deflateInit2(&(this->strm), Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+								   -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+		switch (success) {
+			case Z_OK:
+				break; // Do nothing
+			case Z_MEM_ERROR:
+				throw std::bad_alloc();
+			case Z_VERSION_ERROR:
+				throw std::runtime_error("Incompatible zlib version");
+			case Z_STREAM_ERROR:
+				throw std::runtime_error(strm.msg);
+			default:
+				throw std::runtime_error("Unable to initialize zlib");
+		}
 	}
+	~deflateStream() {
+		deflateEnd(&(this->strm));
+	}
+	z_stream& getStream() {
+		return this->strm;
+	}
+};
+
+static void zlibDeflate(std::ostream& buffer, const std::string& str) {
+	deflateStream ds;
+	z_stream strm = ds.getStream();
 
 	// Input buffer
 	if (str.size() > std::numeric_limits<uInt>::max()) {
@@ -137,7 +163,7 @@ static void zlibDeflate(std::ostream& buffer, const std::string& str) {
 	strm.next_out = reinterpret_cast<Bytef*>(data_out.data());
 
 	// Compress the entire buffer
-	success = deflate(&strm, Z_FINISH);
+	int success = deflate(&strm, Z_FINISH);
 	switch (success) {
 	case Z_OK:
 		throw std::runtime_error("Incomplete deflation");
@@ -152,8 +178,6 @@ static void zlibDeflate(std::ostream& buffer, const std::string& str) {
 	}
 
 	buffer.write(reinterpret_cast<char*>(data_out.data()), strm.total_out);
-
-	deflateEnd(&strm);
 }
 
 // Header for Local File
