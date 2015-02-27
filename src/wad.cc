@@ -135,7 +135,11 @@ std::ostream& operator<<(std::ostream& buffer, Wad& wad) {
 		std::string data = lump.getData();
 
 		// Write lump position
-		WriteInt32LE(infotable, alldata.tellp() + static_cast<std::char_traits<char>::pos_type>(12));
+		auto alldatapos = alldata.tellp() + static_cast<std::char_traits<char>::pos_type>(12);
+		if (alldatapos > std::numeric_limits<int32_t>::max()) {
+			throw std::runtime_error("Couldn't write lump position");
+		}
+		WriteInt32LE(infotable, static_cast<int32_t>(alldatapos));
 
 		// Write lump data
 		alldata.write(data.data(), data.size());
@@ -163,7 +167,11 @@ std::ostream& operator<<(std::ostream& buffer, Wad& wad) {
 	WriteInt32LE(buffer, static_cast<int32_t>(wad.lumps->size()));
 
 	// Write offset of infotable
-	WriteInt32LE(buffer, alldata.tellp() + static_cast<std::char_traits<char>::pos_type>(12));
+	auto alldatapos = alldata.tellp() + static_cast<std::char_traits<char>::pos_type>(12);
+	if (alldatapos > std::numeric_limits<int32_t>::max()) {
+		throw std::runtime_error("Couldn't write infotable position");
+	}
+	WriteInt32LE(buffer, static_cast<int32_t>(alldatapos));
 
 	// Write data
 	if (!(buffer << alldata.rdbuf())) {
