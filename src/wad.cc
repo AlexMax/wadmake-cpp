@@ -17,6 +17,7 @@
  */
 
 #include <cstring>
+#include <limits>
 #include <sstream>
 
 #include "buffer.hh"
