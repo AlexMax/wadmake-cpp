@@ -30,19 +30,37 @@ function Lumps.move(source, istart, iend, ito, dest)
 	return dest
 end
 
+function Lumps:writewad(filename)
+	local file = io.open(filename, 'wb')
+	local data = self:packwad()
+	file:write(data)
+	file:close()
+end
+
+function Lumps:writezip(filename)
+	local file = io.open(filename, 'wb')
+	local data = self:packzip()
+	file:write(data)
+	file:close()
+end
+
 -- Additional functions for `wad` module
 local mod = {}
 
-function mod.openwad(filename)
+function mod.readwad(filename)
 	local file = io.open(filename, 'rb')
 	local data = file:read('a')
-	return wad.readwad(data)
+	local lumps, type = wad.unpackwad(data)
+	file:close()
+	return lumps, type
 end
 
-function mod.openzip(filename)
+function mod.readzip(filename)
 	local file = io.open(filename, 'rb')
 	local data = file:read('a')
-	return wad.readzip(data)
+	local lumps = wad.unpackzip(data)
+	file:close()
+	return lumps
 end
 
 return mod, Lumps

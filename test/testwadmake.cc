@@ -136,8 +136,8 @@ TEST_CASE("Environment should be created correctly", "[lua]") {
 	}
 	SECTION("wad package should exist") {
 		REQUIRE(lua_getglobal(L, "wad") == LUA_TTABLE);
-		REQUIRE(lua_getfield(L, -1, "readwad") == LUA_TFUNCTION);
-		REQUIRE(lua_getfield(L, -2, "openwad") == LUA_TFUNCTION);
+		REQUIRE(lua_getfield(L, -1, "unpackwad") == LUA_TFUNCTION);
+		REQUIRE(lua_getfield(L, -2, "readwad") == LUA_TFUNCTION);
 	}
 }
 
@@ -158,7 +158,7 @@ TEST_CASE("Lumps can be created from scratch", "[luawad]") {
 
 TEST_CASE("Lumps can be created from WAD file", "[luawad]") {
 	LuaEnvironment lua;
-	lua.doString("return wad.openwad('moo2d.wad')", "test");
+	lua.doString("return wad.readwad('moo2d.wad')", "test");
 
 	lua_State* L = lua.getState();
 
@@ -169,7 +169,7 @@ TEST_CASE("Lumps can be created from WAD file", "[luawad]") {
 
 TEST_CASE("Test Lumps:find()", "[luawad]") {
 	LuaEnvironment lua;
-	lua.doString("lumps = wad.openwad('moo2d.wad')", "test");
+	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
 
 	lua_State* L = lua.getState();
 	SECTION("Find a lump index") {
@@ -231,7 +231,7 @@ TEST_CASE("Test Lumps:find()", "[luawad]") {
 
 TEST_CASE("Test Lumps:get()", "[luawad]") {
 	LuaEnvironment lua;
-	lua.doString("lumps = wad.openwad('moo2d.wad')", "test");
+	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
 
 	lua_State* L = lua.getState();
 
@@ -247,7 +247,7 @@ TEST_CASE("Test Lumps:get()", "[luawad]") {
 
 TEST_CASE("Test Lumps:insert()", "[luawad]") {
 	LuaEnvironment lua;
-	lua.doString("lumps = wad.openwad('moo2d.wad')", "test");
+	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
 
 	lua_State* L = lua.getState();
 
@@ -272,7 +272,7 @@ TEST_CASE("Test Lumps:insert()", "[luawad]") {
 
 TEST_CASE("Test Lumps:set()", "[luawad]") {
 	LuaEnvironment lua;
-	lua.doString("lumps = wad.openwad('moo2d.wad')", "test");
+	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
 
 	lua_State* L = lua.getState();
 
@@ -302,9 +302,9 @@ TEST_CASE("Test Lumps:set()", "[luawad]") {
 	}
 }
 
-TEST_CASE("Test Lumps:writewad()", "[luawad]") {
+TEST_CASE("Test Lumps:packwad()", "[luawad]") {
 	LuaEnvironment lua;
-	lua.doString("x = wad.openwad('moo2d.wad');y = x:writewad('pwad');z = wad.readwad(y)", "test");
+	lua.doString("x = wad.readwad('moo2d.wad');y = x:packwad('pwad');z = wad.unpackwad(y)", "test");
 
 	lua_State* L = lua.getState();
 
@@ -313,6 +313,20 @@ TEST_CASE("Test Lumps:writewad()", "[luawad]") {
 
 		REQUIRE(Lua::checkstring(L, -2) == "MAP01");
 		REQUIRE(Lua::checkstring(L, -1) == "");
+	}
+}
+
+TEST_CASE("Test Lumps:packzip()", "[luawad]") {
+	LuaEnvironment lua;
+	lua.doString("x = wad.readzip('duel32f.pk3');y = x:packzip();z = wad.unpackzip(y)", "test");
+
+	lua_State* L = lua.getState();
+
+	SECTION("See if we can successfully read the ZIP data we output") {
+		luaL_dostring(L, "return z:get(1)");
+
+		REQUIRE(Lua::checkstring(L, -2) == "ANIMDEFS");
+		REQUIRE(lua_type(L, -1) == LUA_TSTRING);
 	}
 }
 

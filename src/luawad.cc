@@ -40,7 +40,7 @@ static int wad_createLumps(lua_State* L) {
 }
 
 // Read WAD file data and return the WAD type and lumps
-static int wad_readwad(lua_State* L) {
+static int wad_unpackwad(lua_State* L) {
 	// Read WAD file data into stringstream.
 	size_t len;
 	const char* buffer = luaL_checklstring(L, 1, &len);
@@ -74,7 +74,7 @@ static int wad_readwad(lua_State* L) {
 }
 
 // Read Zip file data and return lumps contained therin
-static int wad_readzip(lua_State* L) {
+static int wad_unpackzip(lua_State* L) {
 	// Read Zip file data into stringstream.
 	size_t len;
 	const char* buffer = luaL_checklstring(L, 1, &len);
@@ -247,8 +247,7 @@ static int ulumps_set(lua_State* L) {
 }
 
 // Write out a WAD file
-// FIXME: Horrific hack with substituting pointers, figure out a better way to do this
-static int ulumps_writewad(lua_State* L) {
+static int ulumps_packwad(lua_State* L) {
 	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
 
 	Wad wad(Wad::Type::PWAD);
@@ -257,6 +256,25 @@ static int ulumps_writewad(lua_State* L) {
 	std::stringstream output;
 	try {
 		output << wad;
+	} catch (const std::runtime_error& e) {
+		return luaL_error(L, e.what());
+	}
+
+	std::string outstr = output.str();
+	lua_pushlstring(L, outstr.data(), outstr.size());
+	return 1;
+}
+
+// Write out a ZIP file
+static int ulumps_packzip(lua_State* L) {
+	auto ptr = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
+
+	Zip zip;
+	zip.setLumps(ptr);
+
+	std::stringstream output;
+	try {
+		output << zip;
 	} catch (const std::runtime_error& e) {
 		return luaL_error(L, e.what());
 	}
@@ -299,7 +317,8 @@ static const luaL_Reg ulumps_functions[] = {
 	{"insert", ulumps_insert},
 	{"remove", ulumps_remove},
 	{"set", ulumps_set},
-	{"writewad", ulumps_writewad},
+	{"packwad", ulumps_packwad},
+	{"packzip", ulumps_packzip},
 	{"__gc", ulumps_gc},
 	{"__len", ulumps_len},
 	{"__tostring", ulumps_tostring},
@@ -309,8 +328,8 @@ static const luaL_Reg ulumps_functions[] = {
 // Functions in the wad package
 static const luaL_Reg wad_functions[] = {
 	{ "createLumps", wad_createLumps },
-	{ "readwad", wad_readwad },
-	{ "readzip", wad_readzip },
+	{ "unpackwad", wad_unpackwad },
+	{ "unpackzip", wad_unpackzip },
 	{ NULL, NULL }
 };
 

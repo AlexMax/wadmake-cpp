@@ -42,6 +42,8 @@ class Zip {
 public:
 	Zip();
 	std::shared_ptr<Directory> getLumps();
+	void setLumps(const std::shared_ptr<Directory>& lumps);
+	void setLumps(Directory&& lumps);
 	friend std::istream& operator>>(std::istream& buffer, Zip& zip);
 	friend std::ostream& operator<<(std::ostream& buffer, Zip& zip);
 };

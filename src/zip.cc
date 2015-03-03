@@ -397,6 +397,14 @@ std::shared_ptr<Directory> Zip::getLumps() {
 	return this->lumps;
 }
 
+void Zip::setLumps(const std::shared_ptr<Directory>& lumps) {
+	this->lumps = lumps;
+}
+
+void Zip::setLumps(Directory&& lumps) {
+	this->lumps = std::make_shared<Directory>(std::move(lumps));
+}
+
 std::istream& operator>>(std::istream& buffer, Zip& zip) {
 	// Ensure our buffer is big enough to be a ZIP file
 	buffer.seekg(0, buffer.end);
