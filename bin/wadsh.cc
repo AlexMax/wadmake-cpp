@@ -16,17 +16,65 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config_wadsh.h"
+
 #include <cstring>
 #include <iostream>
 #include <sstream>
 
+#ifdef READLINE_FOUND
+#include <readline/readline.h>
+#endif
+
 #include "lua.hh"
+
+class endOfFile : public std::exception { };
+
+#ifdef _WIN32
+static const char* exitMessage = "Press Ctrl-Z then Enter on an empty line to quit the shell.";
+#else
+static const char* exitMessage = "Press Ctrl-D on an empty line to quit the shell.";
+#endif
+
+#ifdef READLINE_FOUND
+
+static std::string getLine(const char* prompt) {
+	std::string line;
+
+	// readline() returns malloc'ed pointer, must be freed by hand
+	char* buffer = readline(prompt);
+
+	// Buffer pointer is set to NULL on EOF
+	if (buffer == NULL) {
+		std::free(buffer);
+		throw endOfFile();
+	}
+
+	line = buffer;
+	std::free(buffer);
+	return line;
+}
+
+#else
+
+static std::string getLine(const char* prompt) {
+	std::string line;
+	std::cout << prompt;
+	std::getline(std::cin, line);
+	if (std::cin.eof()) {
+		throw endOfFile();
+	}
+	return line;
+}
+
+#endif
 
 int main(int argc, char** argv) {
 	WADmake::LuaEnvironment lua;
 
 	if (argc > 1) {
 		if (std::strcmp(argv[1], "-") == 0) {
+			// First parameter is -, read script from stdin
 			try {
 				std::stringstream input;
 				input << std::cin.rdbuf();
@@ -36,6 +84,7 @@ int main(int argc, char** argv) {
 				return EXIT_FAILURE;
 			}
 		} else {
+			// Assume all parameters are files containing scripts to run
 			try {
 				lua.doFile(argv[1]);
 			} catch (const std::runtime_error& e) {
@@ -48,27 +97,23 @@ int main(int argc, char** argv) {
 	}
 
 	std::cerr << "WADmake shell" << std::endl;
-#ifdef _WIN32
-	std::cerr << "Press Ctrl-Z then Enter to quit the shell." << std::endl;
-#else
-	std::cerr << "Press Ctrl-D to quit the shell." << std::endl;
-#endif
+	std::cerr << exitMessage << std::endl;
 
 	for (;;) {
-		std::string line; 
-		std::cout << "> ";
-		std::getline(std::cin, line);
-
-		if (std::cin.eof()) {
-			std::cout << "EOF" << std::endl;
+		std::string line;
+		try {
+			line = getLine("> ");
+		} catch (const endOfFile& e) {
+			std::cerr << "EOF" << std::endl;
 			break;
 		}
 
 		try {
 			lua.doString(line, "stdin");
 			if (lua.gettop() != 0) {
-				std::cout << "<- ";
-				lua.writeStack(std::cout) << std::endl;
+				// Implicitly write any return values to stderr
+				std::cerr << "<- ";
+				lua.writeStack(std::cerr) << std::endl;
 			}
 		} catch (const std::runtime_error& e) {
 			std::cerr << e.what() << std::endl;
