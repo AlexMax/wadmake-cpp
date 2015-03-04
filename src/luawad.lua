@@ -25,9 +25,8 @@ function Lumps.move(source, istart, iend, ito, dest)
 		dest = source
 	end
 	for i = istart, iend do
-		source:set(ito + istart - i, source:get(i))
+		dest:set(ito + i - istart, source:get(i))
 	end
-	return dest
 end
 
 function Lumps:writewad(filename)

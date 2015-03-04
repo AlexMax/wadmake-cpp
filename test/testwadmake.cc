@@ -270,6 +270,29 @@ TEST_CASE("Test Lumps:insert()", "[luawad]") {
 	}
 }
 
+TEST_CASE("Test Lumps:move()", "[luawad]") {
+	LuaEnvironment lua;
+	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
+
+	lua_State* L = lua.getState();
+
+	SECTION("Copy lumps from source to destination") {
+		luaL_dostring(L, "dst = wad.createLumps()");
+		luaL_dostring(L, "for i = 1, 3 do dst:insert('', '') end");
+		luaL_dostring(L, "lumps:move(1, 3, 1, dst);return dst:get(1)"); // [lumps][function]
+
+		REQUIRE(Lua::checkstring(L, -2) == "MAP01");
+		REQUIRE(Lua::checkstring(L, -1) == "");
+	}
+
+	SECTION("Lumps should be able to copy to themselves") {
+		luaL_dostring(L, "lumps:move(1, 3, 4);return lumps:get(4)"); // [lumps][function]
+
+		REQUIRE(Lua::checkstring(L, -2) == "MAP01");
+		REQUIRE(Lua::checkstring(L, -1) == "");
+	}
+}
+
 TEST_CASE("Test Lumps:set()", "[luawad]") {
 	LuaEnvironment lua;
 	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
