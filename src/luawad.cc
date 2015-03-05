@@ -147,7 +147,8 @@ static int ulumps_get(lua_State* L) {
 
 	size_t index = luaL_checkinteger(L, 2);
 	if (index < 1 || index > ptr->size()) {
-		luaL_argerror(L, 2, "out of range");
+		lua_pushnil(L);
+		return 1;
 	}
 
 	Lump lump = ptr->at(index - 1);
