@@ -22,22 +22,10 @@
 #include <bitset>
 #include <memory>
 #include <vector>
-#include <unordered_map>
+
+#include "indexedmap.hh"
 
 namespace WADmake {
-
-template <class T>
-class IndexedMap {
-protected:
-	std::list<std::shared_ptr<T>> elements;
-	size_t nextid;
-	std::unordered_map<size_t, std::weak_ptr<T>> elementids;
-public:
-	IndexedMap();
-	T& at(size_t pos);
-	void push_back(T&& element);
-	void reindex();
-};
 
 struct Vertex {
 	int16_t x;

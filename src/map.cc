@@ -24,44 +24,6 @@
 
 namespace WADmake {
 
-template <class T>
-IndexedMap<T>::IndexedMap() : nextid(1) { }
-
-template <class T>
-T& IndexedMap<T>::at(size_t pos) {
-	auto ptr = this->thingids.at(pos).lock();
-	if (ptr) {
-		return *ptr;
-	}
-	else {
-		throw std::runtime_error("Invalid index");
-	}
-}
-
-template <class T>
-void IndexedMap<T>::push_back(T&& element) {
-	if (this->nextid == 0) {
-		throw std::runtime_error("Too many Element IDs");
-	}
-
-	element.id = this->nextid;
-	auto eleptr = std::make_shared<T>(std::move(element));
-	this->elementids.emplace(std::make_pair(this->nextid, eleptr));
-	this->elements.push_back(std::move(eleptr));
-	this->nextid += 1;
-}
-
-template <class T>
-void IndexedMap<T>::reindex() {
-	this->elementids.clear();
-	this->nextid = 1;
-	for (auto eleptr : this->elements) {
-		eleptr->id = this->nextid;
-		this->elementids.emplace(std::make_pair(this->nextid, eleptr));
-		this->nextid += 1;
-	}
-}
-
 std::istream& operator>>(std::istream& buffer, DoomThing& thing) {
 	// X coordinate
 	thing.x = ReadInt16LE(buffer);

@@ -360,7 +360,7 @@ TEST_CASE("Test DoomThings", "[map]") {
 	
 	DoomThings dt;
 	dt.push_back(std::move(thing));
-	dt.at(1);
+	dt.at(0);
 	dt.reindex();
 }
 
