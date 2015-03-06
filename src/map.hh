@@ -26,6 +26,19 @@
 
 namespace WADmake {
 
+template <class T>
+class IndexedMap {
+protected:
+	std::list<std::shared_ptr<T>> elements;
+	size_t nextid;
+	std::unordered_map<size_t, std::weak_ptr<T>> elementids;
+public:
+	IndexedMap();
+	T& at(size_t pos);
+	void push_back(T&& element);
+	void reindex();
+};
+
 struct Vertex {
 	int16_t x;
 	int16_t y;
@@ -75,15 +88,8 @@ struct DoomThing {
 	friend std::ostream& operator<<(std::ostream& buffer, DoomThing& thing);
 };
 
-class DoomThings {
-	size_t nextid;
-	std::vector<std::shared_ptr<DoomThing>> things;
-	std::unordered_map<size_t, std::weak_ptr<DoomThing>> thingids;
+class DoomThings : public IndexedMap<DoomThing> {
 public:
-	DoomThings();
-	DoomThing at(size_t index);
-	void push_back(DoomThing&& thing);
-	void reindex();
 	friend std::istream& operator>>(std::istream& buffer, DoomThings& things);
 	friend std::ostream& operator<<(std::ostream& buffer, DoomThings& things);
 };

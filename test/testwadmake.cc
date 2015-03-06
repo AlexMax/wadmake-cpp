@@ -21,6 +21,7 @@
 
 #include "buffer.hh"
 #include "lua.hh"
+#include "map.hh"
 #include "wad.hh"
 #include "zip.hh"
 
@@ -351,6 +352,16 @@ TEST_CASE("Test Lumps:packzip()", "[luawad]") {
 		REQUIRE(Lua::checkstring(L, -2) == "ANIMDEFS");
 		REQUIRE(lua_type(L, -1) == LUA_TSTRING);
 	}
+}
+
+// This is really just to see if I'm bad at templates or not - decent tests will come
+TEST_CASE("Test DoomThings", "[map]") {
+	DoomThing thing;
+	
+	DoomThings dt;
+	dt.push_back(std::move(thing));
+	dt.at(1);
+	dt.reindex();
 }
 
 }
