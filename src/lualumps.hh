@@ -16,20 +16,13 @@
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <lua.h>
-#include <lauxlib.h>
-
-#include "lualumps.hh"
-#include "luamap.hh"
+#ifndef LUALUMPS_HH
+#define LUALUMPS_HH
 
 namespace WADmake {
 
-int luaopen_wad(lua_State* L) {
-	lua_newtable(L);
-	luaopen_lumps(L); // Lumps userdata
-	luaopen_map(L); // Map userdata
-
-	return 1;
-}
+void luaopen_lumps(lua_State* L);
 
 }
+
+#endif

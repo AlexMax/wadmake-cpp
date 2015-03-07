@@ -21,7 +21,7 @@
 
 namespace WADmake {
 
-int luaopen_map(lua_State* L);
+void luaopen_map(lua_State* L);
 
 }
 

@@ -21,9 +21,9 @@ else()
 endif()
 
 # Sources
-set(WADMAKE_SOURCES buffer.cc directory.cc lua.cc luamap.cc luawad.cc map.cc wad.cc zip.cc)
-set(WADMAKE_HEADERS buffer.hh directory.hh indexedmap.hh lua.hh luamap.hh luawad.hh map.hh wad.hh zip.hh)
-set(WADMAKE_LUA_SOURCES init.lua luawad.lua)
+set(WADMAKE_SOURCES buffer.cc directory.cc lua.cc lualumps.cc luamap.cc luawad.cc map.cc wad.cc zip.cc)
+set(WADMAKE_HEADERS buffer.hh directory.hh indexedmap.hh lua.hh lualumps.hh luamap.hh luawad.hh map.hh wad.hh zip.hh)
+set(WADMAKE_LUA_SOURCES init.lua lualumps.lua)
 
 dump_lua("${WADMAKE_LUA_SOURCES}" ".hh" WADMAKE_LUA_HEADERS)
 
