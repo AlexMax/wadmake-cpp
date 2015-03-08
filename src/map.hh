@@ -66,14 +66,6 @@ struct DoomLinedef {
 typedef std::vector<std::shared_ptr<DoomLinedef>> DoomLinedefs;
 
 struct DoomThing {
-	DoomThing() { }
-	DoomThing(const DoomThing& c) {
-		this->id = c.id;
-		this->x = c.x;
-		this->y = c.y;
-		this->angle = c.angle;
-		this->type = c.type;
-	}
 	size_t id;
 	int16_t x;
 	int16_t y;

@@ -72,7 +72,7 @@ T& IndexedMap<T>::operator[](size_t pos) {
 	} else {
 		auto ptr = std::make_shared<T>();
 		ptr->id = pos;
-		this->elementids.emplace(std::make_pair(pos, ptr));
+		this->elementids[pos] = ptr;
 		this->elements.push_back(ptr);
 		return *ptr;
 	}
@@ -111,7 +111,7 @@ void IndexedMap<T>::push_back(T&& element) {
 
 	element.id = this->nextid;
 	auto eleptr = std::make_shared<T>(std::move(element));
-	this->elementids.emplace(std::make_pair(this->nextid, eleptr));
+	this->elementids[this->nextid] = eleptr;
 	this->elements.push_back(std::move(eleptr));
 	this->nextid += 1;
 }
@@ -122,7 +122,7 @@ void IndexedMap<T>::reindex() {
 	this->nextid = 1;
 	for (auto eleptr : this->elements) {
 		eleptr->id = this->nextid;
-		this->elementids.emplace(std::make_pair(this->nextid, eleptr));
+		this->elementids[this->nextid] = eleptr;
 		this->nextid += 1;
 	}
 }

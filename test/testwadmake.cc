@@ -365,7 +365,18 @@ TEST_CASE("DoomMap can be created from scratch", "[luamap]") {
 
 TEST_CASE("Thing setter and getter works", "[luamap]") {
 	LuaEnvironment lua;
-	lua.doString("x = wad.createDoomMap();x:setthing(1, {x = 32, y = 32});x:getthing(1)", "test");
+	lua.doString("x = wad.createDoomMap();x:setthing(1, {x = 32, y = 32});return x:getthing(1)", "test");
+
+	lua_State* L = lua.getState();
+	REQUIRE(lua_istable(L, -1));
+
+	lua_getfield(L, -1, "x");
+	REQUIRE(lua_tointeger(L, -1) == 32);
+	lua_pop(L, 1);
+
+	lua_getfield(L, -1, "y");
+	REQUIRE(lua_tointeger(L, -1) == 32);
+	lua_pop(L, 1);
 }
 
 }
