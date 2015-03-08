@@ -46,8 +46,13 @@ protected:
 	size_t nextid;
 	std::unordered_map<size_t, std::weak_ptr<T>> elementids;
 public:
+	typedef typename std::unordered_map<size_t, std::weak_ptr<T>>::iterator iterator;
 	IndexedMap();
+	T& operator[](size_t pos);
 	T& at(size_t pos);
+	iterator begin();
+	iterator end();
+	iterator find(size_t index);
 	void push_back(T&& element);
 	void reindex();
 };
@@ -56,14 +61,46 @@ template <class T>
 IndexedMap<T>::IndexedMap() : nextid(0) { }
 
 template <class T>
+T& IndexedMap<T>::operator[](size_t pos) {
+	if (!this->elementids[pos].expired()) {
+		auto ptr = this->elementids[pos].lock();
+		if (ptr) {
+			return *ptr;
+		} else {
+			throw std::runtime_error("Couldn't lock element");
+		}
+	} else {
+		auto ptr = std::make_shared<T>();
+		ptr->id = pos;
+		this->elementids.emplace(std::make_pair(pos, ptr));
+		this->elements.push_back(ptr);
+		return *ptr;
+	}
+}
+
+template <class T>
 T& IndexedMap<T>::at(size_t pos) {
 	auto ptr = this->elementids.at(pos).lock();
 	if (ptr) {
 		return *ptr;
+	} else {
+		throw std::runtime_error("Couldn't lock element");
 	}
-	else {
-		throw std::runtime_error("Invalid index");
-	}
+}
+
+template <class T>
+typename IndexedMap<T>::iterator IndexedMap<T>::begin() {
+	return this->elementids.begin();
+}
+
+template <class T>
+typename IndexedMap<T>::iterator IndexedMap<T>::end() {
+	return this->elementids.end();
+}
+
+template <class T>
+typename IndexedMap<T>::iterator IndexedMap<T>::find(size_t index) {
+	return this->elementids.find(index);
 }
 
 template <class T>

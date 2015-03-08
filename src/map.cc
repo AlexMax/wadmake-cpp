@@ -80,4 +80,8 @@ std::ostream& operator<<(std::ostream& buffer, DoomThings& things) {
 	return buffer;
 }
 
+DoomThings& DoomMap::getThings() {
+	return this->things;
+}
+
 }

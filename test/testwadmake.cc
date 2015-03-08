@@ -148,7 +148,7 @@ TEST_CASE("Environment should handle panics as exceptions", "[lua]") {
 	REQUIRE_THROWS_AS(luaL_error(L, "This error should not abort the program"), LuaPanic);
 }
 
-TEST_CASE("Lumps can be created from scratch", "[luawad]") {
+TEST_CASE("Lumps can be created from scratch", "[lualumps]") {
 	LuaEnvironment lua;
 	lua.doString("return wad.createLumps()", "test");
 
@@ -157,7 +157,7 @@ TEST_CASE("Lumps can be created from scratch", "[luawad]") {
 	REQUIRE(luaL_len(L, -1) == 0);
 }
 
-TEST_CASE("Lumps can be created from WAD file", "[luawad]") {
+TEST_CASE("Lumps can be created from WAD file", "[lualumps]") {
 	LuaEnvironment lua;
 	lua.doString("return wad.readwad('moo2d.wad')", "test");
 
@@ -168,7 +168,7 @@ TEST_CASE("Lumps can be created from WAD file", "[luawad]") {
 	REQUIRE(luaL_len(L, -2) == 11);
 }
 
-TEST_CASE("Test Lumps:find()", "[luawad]") {
+TEST_CASE("Test Lumps:find()", "[lualumps]") {
 	LuaEnvironment lua;
 	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
 
@@ -230,7 +230,7 @@ TEST_CASE("Test Lumps:find()", "[luawad]") {
 	}
 }
 
-TEST_CASE("Test Lumps:get()", "[luawad]") {
+TEST_CASE("Test Lumps:get()", "[lualumps]") {
 	LuaEnvironment lua;
 	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
 
@@ -246,7 +246,7 @@ TEST_CASE("Test Lumps:get()", "[luawad]") {
 	}
 }
 
-TEST_CASE("Test Lumps:insert()", "[luawad]") {
+TEST_CASE("Test Lumps:insert()", "[lualumps]") {
 	LuaEnvironment lua;
 	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
 
@@ -271,7 +271,7 @@ TEST_CASE("Test Lumps:insert()", "[luawad]") {
 	}
 }
 
-TEST_CASE("Test Lumps:move()", "[luawad]") {
+TEST_CASE("Test Lumps:move()", "[lualumps]") {
 	LuaEnvironment lua;
 	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
 
@@ -294,7 +294,7 @@ TEST_CASE("Test Lumps:move()", "[luawad]") {
 	}
 }
 
-TEST_CASE("Test Lumps:set()", "[luawad]") {
+TEST_CASE("Test Lumps:set()", "[lualumps]") {
 	LuaEnvironment lua;
 	lua.doString("lumps = wad.readwad('moo2d.wad')", "test");
 
@@ -326,7 +326,7 @@ TEST_CASE("Test Lumps:set()", "[luawad]") {
 	}
 }
 
-TEST_CASE("Test Lumps:packwad()", "[luawad]") {
+TEST_CASE("Test Lumps:packwad()", "[lualumps]") {
 	LuaEnvironment lua;
 	lua.doString("x = wad.readwad('moo2d.wad');y = x:packwad('pwad');z = wad.unpackwad(y)", "test");
 
@@ -340,7 +340,7 @@ TEST_CASE("Test Lumps:packwad()", "[luawad]") {
 	}
 }
 
-TEST_CASE("Test Lumps:packzip()", "[luawad]") {
+TEST_CASE("Test Lumps:packzip()", "[lualumps]") {
 	LuaEnvironment lua;
 	lua.doString("x = wad.readzip('duel32f.pk3');y = x:packzip();z = wad.unpackzip(y)", "test");
 
@@ -354,14 +354,13 @@ TEST_CASE("Test Lumps:packzip()", "[luawad]") {
 	}
 }
 
-// This is really just to see if I'm bad at templates or not - decent tests will come
-TEST_CASE("Test DoomThings", "[map]") {
-	DoomThing thing;
-	
-	DoomThings dt;
-	dt.push_back(std::move(thing));
-	dt.at(0);
-	dt.reindex();
+TEST_CASE("DoomMap can be created from scratch", "[luamap]") {
+	LuaEnvironment lua;
+	lua.doString("return wad.createDoomMap()", "test");
+
+	lua_State* L = lua.getState();
+	REQUIRE(luaL_checkudata(L, -1, "DoomMap") != NULL);
+//	REQUIRE(luaL_len(L, -1) == 0);
 }
 
 }

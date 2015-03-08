@@ -35,7 +35,60 @@ static int wad_createDoomMap(lua_State* L) {
 static int udoommap_getthing(lua_State* L) {
 	auto ptr = *static_cast<std::shared_ptr<DoomMap>*>(luaL_checkudata(L, 1, WADmake::META_DOOMMAP));
 
+	size_t index = luaL_checkinteger(L, 2);
+	DoomThing thing;
+	try {
+		thing = ptr->getThings().at(index - 1);
+	} catch (const std::out_of_range& e) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	lua_newtable(L);
+	lua_pushinteger(L, thing.x);
+	lua_setfield(L, -2, "x");
+	lua_pushinteger(L, thing.y);
+	lua_setfield(L, -2, "y");
+	lua_pushinteger(L, thing.angle);
+	lua_setfield(L, -2, "angle");
+	lua_pushinteger(L, thing.type);
+	lua_setfield(L, -2, "type");
+	lua_pushinteger(L, thing.flags.to_ulong());
+	lua_setfield(L, -2, "flags");
+
 	return 1;
+}
+static int udoommap_setthing(lua_State* L) {
+	auto ptr = *static_cast<std::shared_ptr<DoomMap>*>(luaL_checkudata(L, 1, WADmake::META_DOOMMAP));
+
+	size_t index = luaL_checkinteger(L, 2);
+	DoomThing& thing = ptr->getThings()[index - 1];
+
+	lua_getfield(L, 3, "x");
+	if (!lua_isnil(L, -1)) {
+		thing.x = lua_tointeger(L, -1);
+	}
+	lua_pop(L, 1);
+
+	lua_getfield(L, 3, "y");
+	if (!lua_isnil(L, -1)) {
+		thing.y = lua_tointeger(L, -1);
+	}
+	lua_pop(L, 1);
+
+	lua_getfield(L, 3, "angle");
+	if (!lua_isnil(L, -1)) {
+		thing.angle = lua_tointeger(L, -1);
+	}
+	lua_pop(L, 1);
+
+	lua_getfield(L, 3, "type");
+	if (!lua_isnil(L, -1)) {
+		thing.angle = lua_tointeger(L, -1);
+	}
+	lua_pop(L, 1);
+
+	return 0;
 }
 
 // Garbage-collect Lumps
@@ -48,6 +101,7 @@ static int udoommap_gc(lua_State* L) {
 // Functions attached to DoomMap userdata
 static const luaL_Reg udoommap_functions[] = {
 	{"getthing", udoommap_getthing},
+	{"setthing", udoommap_setthing},
 	{"__gc", udoommap_gc},
 	{NULL, NULL}
 };
