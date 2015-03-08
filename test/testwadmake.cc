@@ -363,4 +363,9 @@ TEST_CASE("DoomMap can be created from scratch", "[luamap]") {
 //	REQUIRE(luaL_len(L, -1) == 0);
 }
 
+TEST_CASE("Thing setter and getter works", "[luamap]") {
+	LuaEnvironment lua;
+	lua.doString("x = wad.createDoomMap();x:setthing(1, {x = 32, y = 32});x:getthing(1)", "test");
+}
+
 }
