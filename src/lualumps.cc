@@ -22,6 +22,7 @@
 #include <lauxlib.h>
 
 #include "lua.hh"
+#include "lualumps.hh"
 #include "wad.hh"
 #include "zip.hh"
 
@@ -29,7 +30,7 @@ namespace WADmake {
 
 #include "lualumps.lua.hh"
 
-static const char META_LUMPS[] = "Lumps";
+const char META_LUMPS[] = "Lumps";
 
 // Create an empty Lumps userdata
 static int wad_createLumps(lua_State* L) {

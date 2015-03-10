@@ -90,6 +90,7 @@ class DoomMap {
 	Vertexes vertexes;
 public:
 	DoomThings& getThings();
+	void setThings(DoomThings&& things);
 };
 
 }

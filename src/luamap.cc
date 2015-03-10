@@ -16,19 +16,50 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sstream>
+
 #include <lua.h>
 #include <lauxlib.h>
 
+#include "directory.hh"
+#include "lualumps.hh"
+#include "luamap.hh"
 #include "map.hh"
 
 namespace WADmake {
 
-static const char META_DOOMMAP[] = "DoomMap";
+const char META_DOOMMAP[] = "DoomMap";
 
 static int wad_createDoomMap(lua_State* L) {
 	auto ptr = static_cast<std::shared_ptr<DoomMap>*>(lua_newuserdata(L, sizeof(std::shared_ptr<DoomMap>)));
 	new(ptr) std::shared_ptr<DoomMap>(new DoomMap());
 	luaL_setmetatable(L, WADmake::META_DOOMMAP);
+	return 1;
+}
+
+// Given Lumps and an index (optional), unpack map data into a map userdata.
+static int wad_unpackmap(lua_State* L) {
+	auto lumps = *static_cast<std::shared_ptr<Directory>*>(luaL_checkudata(L, 1, WADmake::META_LUMPS));
+
+	size_t index = 1;
+	if (lua_isinteger(L, 2)) {
+		index = lua_tointeger(L, 2);
+	}
+
+	DoomThings things;
+	try {
+		std::stringstream(lumps->at(index).getData()) >> things;
+	} catch (const std::runtime_error& e) {
+		lua_pushstring(L, e.what());
+		throw e;
+	}
+
+	auto ptr = static_cast<std::shared_ptr<DoomMap>*>(lua_newuserdata(L, sizeof(std::shared_ptr<DoomMap>)));
+	new(ptr) std::shared_ptr<DoomMap>(new DoomMap());
+	luaL_setmetatable(L, WADmake::META_DOOMMAP);
+
+	(*ptr)->setThings(std::move(things));
+
 	return 1;
 }
 
@@ -109,6 +140,7 @@ static const luaL_Reg udoommap_functions[] = {
 // Functions that go in the top-level wad package
 static const luaL_Reg wad_functions[] = {
 	{"createDoomMap", wad_createDoomMap},
+	{"unpackmap", wad_unpackmap},
 	{NULL, NULL}
 };
 

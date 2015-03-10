@@ -63,7 +63,11 @@ std::ostream& operator<<(std::ostream& buffer, DoomThing& thing) {
 }
 
 std::istream& operator>>(std::istream& buffer, DoomThings& things) {
-	while (!buffer.eof()) {
+	for (;;) {
+		buffer.peek(); // Trigger EOF if we're at the end
+		if (buffer.eof()) {
+			break;
+		}
 		DoomThing thing;
 		buffer >> thing;
 		things.push_back(std::move(thing));
@@ -82,6 +86,10 @@ std::ostream& operator<<(std::ostream& buffer, DoomThings& things) {
 
 DoomThings& DoomMap::getThings() {
 	return this->things;
+}
+
+void DoomMap::setThings(DoomThings&& things) {
+	this->things = std::move(things);
 }
 
 }

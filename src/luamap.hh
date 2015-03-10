@@ -21,6 +21,8 @@
 
 namespace WADmake {
 
+extern const char META_DOOMMAP[];
+
 void luaopen_map(lua_State* L);
 
 }

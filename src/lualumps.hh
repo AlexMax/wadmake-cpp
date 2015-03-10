@@ -21,6 +21,8 @@
 
 namespace WADmake {
 
+extern const char META_LUMPS[];
+
 void luaopen_lumps(lua_State* L);
 
 }
