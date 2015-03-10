@@ -62,19 +62,15 @@ IndexedMap<T>::IndexedMap() : nextid(0) { }
 
 template <class T>
 T& IndexedMap<T>::operator[](size_t pos) {
-	if (!this->elementids[pos].expired()) {
-		auto ptr = this->elementids[pos].lock();
-		if (ptr) {
-			return *ptr;
-		} else {
-			throw std::runtime_error("Couldn't lock element");
-		}
-	} else {
-		auto ptr = std::make_shared<T>();
-		ptr->id = pos;
-		this->elementids[pos] = ptr;
-		this->elements.push_back(ptr);
+	auto ptr = this->elementids[pos].lock();
+	if (ptr) {
 		return *ptr;
+	} else {
+		auto newptr = std::make_shared<T>();
+		newptr->id = pos;
+		this->elementids[pos] = newptr;
+		this->elements.push_back(newptr);
+		return *newptr;
 	}
 }
 
