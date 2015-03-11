@@ -53,6 +53,7 @@ public:
 	iterator begin();
 	iterator end();
 	iterator find(size_t index);
+	std::shared_ptr<T> lock(size_t pos);
 	void push_back(T&& element);
 	void reindex();
 };
@@ -97,6 +98,11 @@ typename IndexedMap<T>::iterator IndexedMap<T>::end() {
 template <class T>
 typename IndexedMap<T>::iterator IndexedMap<T>::find(size_t index) {
 	return this->elementids.find(index);
+}
+
+template <class T>
+std::shared_ptr<T> IndexedMap<T>::lock(size_t pos) {
+	return this->elementids.at(pos).lock();
 }
 
 template <class T>

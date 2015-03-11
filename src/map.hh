@@ -28,12 +28,21 @@
 namespace WADmake {
 
 struct Vertex {
+	size_t id;
 	int16_t x;
 	int16_t y;
+	std::istream& read(std::istream& buffer);
+	std::ostream& write(std::ostream& buffer);
 };
-typedef std::vector<std::shared_ptr<Vertex>> Vertexes;
+
+class Vertexes : public IndexedMap<Vertex> {
+public:
+	std::istream& read(std::istream& buffer);
+	std::ostream& write(std::ostream& buffer);
+};
 
 struct Sector {
+	size_t id;
 	int16_t floor;
 	int16_t ceiling;
 	std::string floortex;
@@ -41,18 +50,33 @@ struct Sector {
 	int16_t light;
 	int16_t special;
 	int16_t tag;
+	std::istream& read(std::istream& buffer);
+	std::ostream& write(std::ostream& buffer);
 };
-typedef std::vector<std::shared_ptr<Sector>> Sectors;
+
+class Sectors : public IndexedMap<Sector> {
+public:
+	std::istream& read(std::istream& buffer);
+	std::ostream& write(std::ostream& buffer);
+};
 
 struct Sidedef {
+	size_t id;
 	int16_t xoffset;
 	int16_t yoffset;
 	std::string uppertex;
 	std::string middletex;
 	std::string lowertex;
 	std::weak_ptr<Sector> sector;
+	std::istream& read(std::istream& buffer, Sectors& sectors);
+	std::ostream& write(std::ostream& buffer);
 };
-typedef std::vector<std::shared_ptr<Sidedef>> Sidedefs;
+
+class Sidedefs : public IndexedMap<Sidedef> {
+public:
+	std::istream& read(std::istream& buffer, Sectors& sectors);
+	std::ostream& write(std::ostream& buffer);
+};
 
 struct DoomLinedef {
 	std::weak_ptr<Vertex> startvertex;
@@ -60,8 +84,8 @@ struct DoomLinedef {
 	std::bitset<sizeof(uint16_t)> flags;
 	int16_t special;
 	int16_t tag;
-	std::weak_ptr<Vertex> front;
-	std::weak_ptr<Vertex> back;
+	std::weak_ptr<Sidedef> front;
+	std::weak_ptr<Sidedef> back;
 };
 typedef std::vector<std::shared_ptr<DoomLinedef>> DoomLinedefs;
 
@@ -72,14 +96,14 @@ struct DoomThing {
 	uint16_t angle;
 	uint16_t type;
 	std::bitset<sizeof(uint16_t)> flags;
-	friend std::istream& operator>>(std::istream& buffer, DoomThing& thing);
-	friend std::ostream& operator<<(std::ostream& buffer, DoomThing& thing);
+	std::istream& read(std::istream& buffer);
+	std::ostream& write(std::ostream& buffer);
 };
 
 class DoomThings : public IndexedMap<DoomThing> {
 public:
-	friend std::istream& operator>>(std::istream& buffer, DoomThings& things);
-	friend std::ostream& operator<<(std::ostream& buffer, DoomThings& things);
+	std::istream& read(std::istream& buffer);
+	std::ostream& write(std::ostream& buffer);
 };
 
 class DoomMap {
@@ -89,8 +113,14 @@ class DoomMap {
 	Sectors sectors;
 	Vertexes vertexes;
 public:
+	Sectors& getSectors();
+	Sidedefs& getSidedefs();
 	DoomThings& getThings();
+	Vertexes& getVertexes();
+	void setSectors(Sectors&& sectors);
+	void setSidedefs(Sidedefs&& sidedefs);
 	void setThings(DoomThings&& things);
+	void setVertexes(Vertexes&& vertexes);
 };
 
 }

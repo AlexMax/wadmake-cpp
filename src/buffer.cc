@@ -51,6 +51,67 @@ void WriteString(std::ostream& buffer, const std::string& str) {
 	}
 }
 
+std::string ReadCString(std::istream& buffer, size_t len) {
+	if (len == 0) {
+		return std::string();
+	}
+
+	std::vector<char> result(len);
+	if (!buffer.read(result.data(), len)) {
+		std::stringstream err;
+		err << "Couldn't read " << len << " bytes from stream";
+		throw std::runtime_error(err.str());
+	}
+
+	// Find a NULL byte, and truncate the string if we find it.
+	for (auto it = result.begin();it != result.end();++it) {
+		if (*it == '\0') {
+			if (it == result.begin()) {
+				return std::string();
+			} else {
+				return std::string(result.begin(), it);
+			}
+		}
+	}
+
+	return std::string(result.begin(), result.end());
+}
+
+// DANGER: This function will not write the trailing NULL byte if there
+//         isn't any room.  This is _INTENTIONAL_, as there are many
+//         WAD structures that have fixed-width string buffers with
+//         optional trailing NULL bytes for anything shorter.
+void WriteCString(std::ostream& buffer, const std::string& str, size_t len) {
+	if (str.size() == 0 || len == 0) {
+		return;
+	}
+
+	size_t reallen;
+	if (str.size() >= len) {
+		reallen = len;
+	} else {
+		reallen = str.size();
+	}
+
+	// Write the entire buffer without a NULL
+	if (!buffer.write(str.data(), reallen)) {
+		std::stringstream err;
+		err << "Couldn't write " << str.size() << " bytes to stream";
+		throw std::runtime_error(err.str());
+	}
+
+	// If our string is shorter than the buffer, pad with NULL
+	if (reallen < len) {
+		for (size_t i = reallen;i < len;i++) {
+			if (!buffer.write('\0', sizeof(char))) {
+				std::stringstream err;
+				err << "Couldn't pad " << (len - reallen) << " bytes to stream";
+				throw std::runtime_error(err.str());
+			}
+		}
+	}
+}
+
 std::vector<char> ReadBuffer(std::istream& buffer, size_t len) {
 	if (len == 0) {
 		return std::vector<char>();

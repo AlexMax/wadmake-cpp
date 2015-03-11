@@ -360,7 +360,14 @@ TEST_CASE("DoomMap can be created from scratch", "[luamap]") {
 
 	lua_State* L = lua.getState();
 	REQUIRE(luaL_checkudata(L, -1, "DoomMap") != NULL);
-//	REQUIRE(luaL_len(L, -1) == 0);
+}
+
+TEST_CASE("Test wad.createDoomMap()", "[luamap]") {
+	LuaEnvironment lua;
+	lua.doString("x = wad.readwad('moo2d.wad');return wad.createDoomMap(x)", "test");
+
+	lua_State* L = lua.getState();
+	REQUIRE(luaL_checkudata(L, -1, "DoomMap") != NULL);
 }
 
 TEST_CASE("Thing setter and getter works", "[luamap]") {
