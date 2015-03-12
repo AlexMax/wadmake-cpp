@@ -362,12 +362,43 @@ TEST_CASE("DoomMap can be created from scratch", "[luamap]") {
 	REQUIRE(luaL_checkudata(L, -1, "DoomMap") != NULL);
 }
 
-TEST_CASE("Test wad.createDoomMap()", "[luamap]") {
+TEST_CASE("DoomMap can be created from WAD file", "[luamap]") {
 	LuaEnvironment lua;
 	lua.doString("x = wad.readwad('moo2d.wad');return wad.createDoomMap(x)", "test");
 
 	lua_State* L = lua.getState();
 	REQUIRE(luaL_checkudata(L, -1, "DoomMap") != NULL);
+}
+
+TEST_CASE("Test DoomMap:packmap()", "[luamap]") {
+	LuaEnvironment lua;
+	lua.doString("x = wad.readwad('moo2d.wad');y = wad.createDoomMap(x);z = y:packmap('MAP01')", "test");
+
+	lua_State* L = lua.getState();
+
+	// THINGS
+	lua.doString("return x:get(2) == z:get(2)", "test");
+	REQUIRE(lua_isboolean(L, -1) == true);
+	REQUIRE(lua_toboolean(L, -1) == true);
+	lua_pop(L, 1);
+
+	// LINEDEFS
+	lua.doString("return x:get(3) == z:get(3)", "test");
+	REQUIRE(lua_isboolean(L, -1) == true);
+	REQUIRE(lua_toboolean(L, -1) == true);
+	lua_pop(L, 1);
+
+	// SIDEDEFS
+	lua.doString("return x:get(4) == z:get(4)", "test");
+	REQUIRE(lua_isboolean(L, -1) == true);
+	REQUIRE(lua_toboolean(L, -1) == true);
+	lua_pop(L, 1);
+
+	// SECTORS
+	lua.doString("return x:get(8) == z:get(8)", "test");
+	REQUIRE(lua_isboolean(L, -1) == true);
+	REQUIRE(lua_toboolean(L, -1) == true);
+	lua_pop(L, 1);
 }
 
 TEST_CASE("Thing setter and getter works", "[luamap]") {

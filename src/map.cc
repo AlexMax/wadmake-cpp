@@ -205,6 +205,106 @@ std::ostream& Sidedefs::write(std::ostream& buffer) {
 	return buffer;
 }
 
+std::istream& DoomLinedef::read(std::istream& buffer, Vertexes& vertexes, Sidedefs& sidedefs) {
+	// Start vertex
+	int16_t startvertexid = ReadInt16LE(buffer);
+	this->startvertex = vertexes.lock(startvertexid);
+
+	// End vertex
+	int16_t endvertexid = ReadInt16LE(buffer);
+	this->endvertex = vertexes.lock(endvertexid);
+
+	// Flags
+	this->flags = ReadUInt16LE(buffer);
+
+	// Line special
+	this->special = ReadInt16LE(buffer);
+
+	// Line tag
+	this->tag = ReadInt16LE(buffer);
+
+	// Front sidedef
+	int16_t frontsidedefid = ReadInt16LE(buffer);
+	if (frontsidedefid != -1) {
+		this->frontsidedef = sidedefs.lock(frontsidedefid);
+	}
+
+	// Back sidedef
+	int16_t backsidedefid = ReadInt16LE(buffer);
+	if (backsidedefid != -1) {
+		this->backsidedef = sidedefs.lock(backsidedefid);
+	}
+
+	return buffer;
+}
+
+std::ostream& DoomLinedef::write(std::ostream& buffer) {
+	// Start vertex
+	auto startvertex = this->startvertex.lock();
+	if (startvertex) {
+		WriteInt16LE(buffer, startvertex->id);
+	} else {
+		throw std::runtime_error("Linedef is missing start vertex");
+	}
+
+	// End vertex
+	auto endvertex = this->endvertex.lock();
+	if (endvertex) {
+		WriteInt16LE(buffer, endvertex->id);
+	} else {
+		throw std::runtime_error("Linedef is missing end vertex");
+	}
+
+	// Flags
+	WriteUInt16LE(buffer, this->flags.to_ulong());
+
+	// Line special
+	WriteInt16LE(buffer, this->special);
+
+	// Line tag
+	WriteInt16LE(buffer, this->tag);
+
+	// Front sidedef
+	auto frontsidedef = this->frontsidedef.lock();
+	if (frontsidedef) {
+		WriteInt16LE(buffer, frontsidedef->id);
+	} else {
+		WriteInt16LE(buffer, -1);
+	}
+
+	// Back sidedef
+	auto backsidedef = this->backsidedef.lock();
+	if (backsidedef) {
+		WriteInt16LE(buffer, backsidedef->id);
+	} else {
+		WriteInt16LE(buffer, -1);
+	}
+
+	return buffer;
+}
+
+std::istream& DoomLinedefs::read(std::istream& buffer, Vertexes& vertexes, Sidedefs& sidedefs) {
+	for (;;) {
+		buffer.peek(); // Trigger EOF if we're at the end
+		if (buffer.eof()) {
+			break;
+		}
+		DoomLinedef linedef;
+		linedef.read(buffer, vertexes, sidedefs);
+		this->push_back(std::move(linedef));
+	}
+
+	return buffer;
+}
+
+std::ostream& DoomLinedefs::write(std::ostream& buffer) {
+	for (auto linedef : this->elements) {
+		linedef->write(buffer);
+	}
+
+	return buffer;
+}
+
 std::istream& DoomThing::read(std::istream& buffer) {
 	// X coordinate
 	this->x = ReadInt16LE(buffer);
@@ -265,6 +365,10 @@ std::ostream& DoomThings::write(std::ostream& buffer) {
 	return buffer;
 }
 
+DoomLinedefs& DoomMap::getLinedefs() {
+	return this->linedefs;
+}
+
 Sectors& DoomMap::getSectors() {
 	return this->sectors;
 }
@@ -279,6 +383,10 @@ DoomThings& DoomMap::getThings() {
 
 Vertexes& DoomMap::getVertexes() {
 	return this->vertexes;
+}
+
+void DoomMap::setLinedefs(DoomLinedefs&& linedefs) {
+	this->linedefs = std::move(linedefs);
 }
 
 void DoomMap::setSectors(Sectors&& sectors) {

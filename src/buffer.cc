@@ -103,7 +103,7 @@ void WriteCString(std::ostream& buffer, const std::string& str, size_t len) {
 	// If our string is shorter than the buffer, pad with NULL
 	if (reallen < len) {
 		for (size_t i = reallen;i < len;i++) {
-			if (!buffer.write('\0', sizeof(char))) {
+			if (!buffer.write("\0", 1)) {
 				std::stringstream err;
 				err << "Couldn't pad " << (len - reallen) << " bytes to stream";
 				throw std::runtime_error(err.str());

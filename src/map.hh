@@ -79,15 +79,23 @@ public:
 };
 
 struct DoomLinedef {
+	size_t id;
 	std::weak_ptr<Vertex> startvertex;
 	std::weak_ptr<Vertex> endvertex;
 	std::bitset<sizeof(uint16_t)> flags;
 	int16_t special;
 	int16_t tag;
-	std::weak_ptr<Sidedef> front;
-	std::weak_ptr<Sidedef> back;
+	std::weak_ptr<Sidedef> frontsidedef;
+	std::weak_ptr<Sidedef> backsidedef;
+	std::istream& read(std::istream& buffer, Vertexes& vertexes, Sidedefs& sidedefs);
+	std::ostream& write(std::ostream& buffer);
 };
-typedef std::vector<std::shared_ptr<DoomLinedef>> DoomLinedefs;
+
+class DoomLinedefs : public IndexedMap<DoomLinedef> {
+public:
+	std::istream& read(std::istream& buffer, Vertexes& vertexes, Sidedefs& sidedefs);
+	std::ostream& write(std::ostream& buffer);
+};
 
 struct DoomThing {
 	size_t id;
@@ -95,7 +103,7 @@ struct DoomThing {
 	int16_t y;
 	uint16_t angle;
 	uint16_t type;
-	std::bitset<sizeof(uint16_t)> flags;
+	std::bitset<16> flags;
 	std::istream& read(std::istream& buffer);
 	std::ostream& write(std::ostream& buffer);
 };
@@ -113,10 +121,12 @@ class DoomMap {
 	Sectors sectors;
 	Vertexes vertexes;
 public:
+	DoomLinedefs& getLinedefs();
 	Sectors& getSectors();
 	Sidedefs& getSidedefs();
 	DoomThings& getThings();
 	Vertexes& getVertexes();
+	void setLinedefs(DoomLinedefs&& linedefs);
 	void setSectors(Sectors&& sectors);
 	void setSidedefs(Sidedefs&& sidedefs);
 	void setThings(DoomThings&& things);

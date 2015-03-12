@@ -22,6 +22,7 @@
 #include <lauxlib.h>
 
 #include "directory.hh"
+#include "lua.hh"
 #include "lualumps.hh"
 #include "luamap.hh"
 #include "map.hh"
@@ -47,6 +48,7 @@ static int wad_unpackmap(lua_State* L) {
 	}
 
 	DoomThings things;
+	DoomLinedefs linedefs;
 	Sidedefs sidedefs;
 	Vertexes vertexes;
 	Sectors sectors;
@@ -57,6 +59,8 @@ static int wad_unpackmap(lua_State* L) {
 		sectors.read(sectorsbuffer);
 		std::stringstream sidedefsbuffer(lumps->at(index + 2).getData());
 		sidedefs.read(sidedefsbuffer, sectors);
+		std::stringstream linedefsbuffer(lumps->at(index + 1).getData());
+		linedefs.read(linedefsbuffer, vertexes, sidedefs);
 		std::stringstream thingsbuffer(lumps->at(index).getData());
 		things.read(thingsbuffer);
 	} catch (const std::runtime_error& e) {
@@ -69,9 +73,47 @@ static int wad_unpackmap(lua_State* L) {
 	luaL_setmetatable(L, WADmake::META_DOOMMAP);
 
 	(*ptr)->setThings(std::move(things));
+	(*ptr)->setLinedefs(std::move(linedefs));
 	(*ptr)->setSidedefs(std::move(sidedefs));
 	(*ptr)->setVertexes(std::move(vertexes));
 	(*ptr)->setSectors(std::move(sectors));
+
+	return 1;
+}
+
+static int udoommap_getlinedef(lua_State* L) {
+	auto ptr = *static_cast<std::shared_ptr<DoomMap>*>(luaL_checkudata(L, 1, WADmake::META_DOOMMAP));
+
+	size_t index = luaL_checkinteger(L, 2);
+	DoomLinedef linedef;
+	try {
+		linedef = ptr->getLinedefs().at(index - 1);
+	} catch (const std::out_of_range& e) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	lua_newtable(L);
+	lua_pushinteger(L, linedef.startvertex.lock()->id + 1);
+	lua_setfield(L, -2, "startvertex");
+	lua_pushinteger(L, linedef.endvertex.lock()->id + 1);
+	lua_setfield(L, -2, "endvertex");
+	lua_pushinteger(L, linedef.flags.to_ulong());
+	lua_setfield(L, -2, "flags");
+	lua_pushinteger(L, linedef.special);
+	lua_setfield(L, -2, "special");
+	lua_pushinteger(L, linedef.tag);
+	lua_setfield(L, -2, "tag");
+	auto frontsidedef = linedef.frontsidedef.lock();
+	if (frontsidedef) {
+		lua_pushinteger(L, frontsidedef->id + 1);
+		lua_setfield(L, -2, "frontsidedef");
+	}
+	auto backsidedef = linedef.backsidedef.lock();
+	if (backsidedef) {
+		lua_pushinteger(L, backsidedef->id + 1);
+		lua_setfield(L, -2, "backsidedef");
+	}
 
 	return 1;
 }
@@ -182,6 +224,139 @@ static int udoommap_getvertex(lua_State* L) {
 	lua_setfield(L, -2, "y");
 
 	return 1;
+}
+
+static int udoommap_packmap(lua_State* L) {
+	auto ptr = *static_cast<std::shared_ptr<DoomMap>*>(luaL_checkudata(L, 1, WADmake::META_DOOMMAP));
+
+	// Check for map name parameter
+	std::string name = Lua::checkstring(L, 2);
+
+	// Create Directory for map data
+	auto dir = static_cast<std::shared_ptr<Directory>*>(lua_newuserdata(L, sizeof(std::shared_ptr<Directory>)));
+	new(dir) std::shared_ptr<Directory>(new Directory());
+	luaL_setmetatable(L, WADmake::META_LUMPS);
+
+	// Header
+	Lump header;
+	header.setName(std::move(name));
+	(*dir)->push_back(std::move(header));
+
+	// THINGS
+	Lump things;
+	things.setName("THINGS");
+	std::stringstream thingsbuffer;
+	ptr->getThings().write(thingsbuffer);
+	things.setData(thingsbuffer.str());
+	(*dir)->push_back(std::move(things));
+
+	// LINEDEFS
+	Lump linedefs;
+	linedefs.setName("LINEDEFS");
+	std::stringstream linedefsbuffer;
+	ptr->getLinedefs().write(linedefsbuffer);
+	linedefs.setData(linedefsbuffer.str());
+	(*dir)->push_back(std::move(linedefs));
+
+	// SIDEDEFS
+	Lump sidedefs;
+	sidedefs.setName("SIDEDEFS");
+	std::stringstream sidedefsbuffer;
+	ptr->getSidedefs().write(sidedefsbuffer);
+	sidedefs.setData(sidedefsbuffer.str());
+	(*dir)->push_back(std::move(sidedefs));
+
+	// VERTEXES
+	Lump vertexes;
+	vertexes.setName("VERTEXES");
+	std::stringstream vertexesbuffer;
+	ptr->getVertexes().write(vertexesbuffer);
+	vertexes.setData(vertexesbuffer.str());
+	(*dir)->push_back(std::move(vertexes));
+
+	// SEGS (empty for now)
+	Lump segs;
+	segs.setName("SEGS");
+	(*dir)->push_back(std::move(segs));
+
+	// SSECTORS (empty for now)
+	Lump ssectors;
+	ssectors.setName("SSECTORS");
+	(*dir)->push_back(std::move(ssectors));
+
+	// NODES (empty for now)
+	Lump nodes;
+	nodes.setName("NODES");
+	(*dir)->push_back(std::move(nodes));
+
+	// SECTORS
+	Lump sectors;
+	sectors.setName("SECTORS");
+	std::stringstream sectorsbuffer;
+	ptr->getSectors().write(sectorsbuffer);
+	sectors.setData(sectorsbuffer.str());
+	(*dir)->push_back(std::move(sectors));
+
+	// REJECT (empty for now)
+	Lump reject;
+	reject.setName("REJECT");
+	(*dir)->push_back(std::move(reject));
+
+	// BLOCKMAP (empty for now)
+	Lump blockmap;
+	blockmap.setName("BLOCKMAP");
+	(*dir)->push_back(std::move(blockmap));
+
+	return 1;
+}
+
+static int udoommap_setlinedef(lua_State* L) {
+	auto ptr = *static_cast<std::shared_ptr<DoomMap>*>(luaL_checkudata(L, 1, WADmake::META_DOOMMAP));
+
+	size_t index = luaL_checkinteger(L, 2);
+	DoomLinedef& linedef = ptr->getLinedefs()[index - 1];
+
+	lua_getfield(L, 3, "startvertex");
+	if (!lua_isnil(L, -1)) {
+		size_t vertexid = lua_tointeger(L, -1);
+		linedef.startvertex = ptr->getVertexes().lock(vertexid - 1);
+	}
+	lua_pop(L, 1);
+
+	lua_getfield(L, 3, "endvertex");
+	if (!lua_isnil(L, -1)) {
+		size_t vertexid = lua_tointeger(L, -1);
+		linedef.endvertex = ptr->getVertexes().lock(vertexid - 1);
+	}
+	lua_pop(L, 1);
+
+	lua_getfield(L, 3, "special");
+	if (!lua_isnil(L, -1)) {
+		linedef.special = lua_tointeger(L, -1);
+	}
+	lua_pop(L, 1);
+
+	lua_getfield(L, 3, "tag");
+	if (!lua_isnil(L, -1)) {
+		linedef.tag = lua_tointeger(L, -1);
+	}
+	lua_pop(L, 1);
+
+	lua_getfield(L, 3, "frontsidedef");
+	if (!lua_isnil(L, -1)) {
+		size_t sidedefid = lua_tointeger(L, -1);
+		linedef.frontsidedef = ptr->getSidedefs().lock(sidedefid - 1);
+	}
+	lua_pop(L, 1);
+
+	lua_getfield(L, 3, "backsidedef");
+	if (!lua_isnil(L, -1)) {
+		size_t sidedefid = lua_tointeger(L, -1);
+		linedef.backsidedef = ptr->getSidedefs().lock(sidedefid - 1);
+	}
+	lua_pop(L, 1);
+
+	return 0;
 }
 
 static int udoommap_setsector(lua_State* L) {
@@ -344,12 +519,15 @@ static int udoommap_gc(lua_State* L) {
 
 // Functions attached to DoomMap userdata
 static const luaL_Reg udoommap_functions[] = {
-	{"getsidedef", udoommap_getsidedef},
+	{"getlinedef", udoommap_getlinedef},
 	{"getsector", udoommap_getsector},
+	{"getsidedef", udoommap_getsidedef},
 	{"getthing", udoommap_getthing},
+	{"packmap", udoommap_packmap},
 	{"getvertex", udoommap_getvertex},
-	{"setsidedef", udoommap_setsidedef},
+	{"setlinedef", udoommap_setlinedef},
 	{"setsector", udoommap_setsector},
+	{"setsidedef", udoommap_setsidedef},
 	{"setthing", udoommap_setthing},
 	{"setvertex", udoommap_setvertex},
 	{"__gc", udoommap_gc},
