@@ -52,6 +52,7 @@ static int wad_unpackmap(lua_State* L) {
 	Sidedefs sidedefs;
 	Vertexes vertexes;
 	Sectors sectors;
+	std::string segs, ssectors, nodes, reject, blockmap;
 	try {
 		std::stringstream vertexesbuffer(lumps->at(index + 3).getData());
 		vertexes.read(vertexesbuffer);
@@ -63,6 +64,16 @@ static int wad_unpackmap(lua_State* L) {
 		linedefs.read(linedefsbuffer, vertexes, sidedefs);
 		std::stringstream thingsbuffer(lumps->at(index).getData());
 		things.read(thingsbuffer);
+		std::stringstream segsbuffer(lumps->at(index + 4).getData());
+		segs = segsbuffer.str();
+		std::stringstream ssectorsbuffer(lumps->at(index + 5).getData());
+		ssectors = segsbuffer.str();
+		std::stringstream nodesbuffer(lumps->at(index + 6).getData());
+		nodes = segsbuffer.str();
+		std::stringstream rejectbuffer(lumps->at(index + 8).getData());
+		reject = segsbuffer.str();
+		std::stringstream blockmapbuffer(lumps->at(index + 9).getData());
+		blockmap = segsbuffer.str();
 	} catch (const std::runtime_error& e) {
 		lua_pushstring(L, e.what());
 		throw e;
@@ -76,7 +87,12 @@ static int wad_unpackmap(lua_State* L) {
 	(*ptr)->setLinedefs(std::move(linedefs));
 	(*ptr)->setSidedefs(std::move(sidedefs));
 	(*ptr)->setVertexes(std::move(vertexes));
+	(*ptr)->setSegs(std::move(segs));
+	(*ptr)->setSsectors(std::move(ssectors));
+	(*ptr)->setNodes(std::move(nodes));
 	(*ptr)->setSectors(std::move(sectors));
+	(*ptr)->setReject(std::move(reject));
+	(*ptr)->setBlockmap(std::move(blockmap));
 
 	return 1;
 }
@@ -274,19 +290,25 @@ static int udoommap_packmap(lua_State* L) {
 	vertexes.setData(vertexesbuffer.str());
 	(*dir)->push_back(std::move(vertexes));
 
-	// SEGS (empty for now)
+	// SEGS
 	Lump segs;
 	segs.setName("SEGS");
+	std::string segsbuffer = ptr->getSegs();
+	segs.setData(std::move(segsbuffer));
 	(*dir)->push_back(std::move(segs));
 
-	// SSECTORS (empty for now)
+	// SSECTORS
 	Lump ssectors;
 	ssectors.setName("SSECTORS");
+	std::string ssectorsbuffer = ptr->getSsectors();
+	ssectors.setData(std::move(ssectorsbuffer));
 	(*dir)->push_back(std::move(ssectors));
 
-	// NODES (empty for now)
+	// NODES
 	Lump nodes;
 	nodes.setName("NODES");
+	std::string nodesbuffer = ptr->getNodes();
+	nodes.setData(std::move(nodesbuffer));
 	(*dir)->push_back(std::move(nodes));
 
 	// SECTORS
@@ -297,14 +319,18 @@ static int udoommap_packmap(lua_State* L) {
 	sectors.setData(sectorsbuffer.str());
 	(*dir)->push_back(std::move(sectors));
 
-	// REJECT (empty for now)
+	// REJECT
 	Lump reject;
 	reject.setName("REJECT");
+	std::string rejectbuffer = ptr->getReject();
+	reject.setData(std::move(rejectbuffer));
 	(*dir)->push_back(std::move(reject));
 
-	// BLOCKMAP (empty for now)
+	// BLOCKMAP
 	Lump blockmap;
 	blockmap.setName("BLOCKMAP");
+	std::string blockmapbuffer = ptr->getBlockmap();
+	reject.setData(std::move(blockmapbuffer));
 	(*dir)->push_back(std::move(blockmap));
 
 	return 1;

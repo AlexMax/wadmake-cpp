@@ -365,12 +365,32 @@ std::ostream& DoomThings::write(std::ostream& buffer) {
 	return buffer;
 }
 
+std::string& DoomMap::getBlockmap() {
+	return this->blockmap;
+}
+
 DoomLinedefs& DoomMap::getLinedefs() {
 	return this->linedefs;
 }
 
+std::string& DoomMap::getNodes() {
+	return this->nodes;
+}
+
+std::string& DoomMap::getReject() {
+	return this->reject;
+}
+
 Sectors& DoomMap::getSectors() {
 	return this->sectors;
+}
+
+std::string& DoomMap::getSegs() {
+	return this->segs;
+}
+
+std::string& DoomMap::getSsectors() {
+	return this->ssectors;
 }
 
 Sidedefs& DoomMap::getSidedefs() {
@@ -385,12 +405,32 @@ Vertexes& DoomMap::getVertexes() {
 	return this->vertexes;
 }
 
+void DoomMap::setBlockmap(std::string&& blockmap) {
+	this->blockmap = std::move(blockmap);
+}
+
 void DoomMap::setLinedefs(DoomLinedefs&& linedefs) {
 	this->linedefs = std::move(linedefs);
 }
 
+void DoomMap::setNodes(std::string&& nodes) {
+	this->nodes = std::move(nodes);
+}
+
+void DoomMap::setReject(std::string&& reject) {
+	this->reject = std::move(reject);
+}
+
+void DoomMap::setSegs(std::string&& segs) {
+	this->segs = std::move(segs);
+}
+
 void DoomMap::setSectors(Sectors&& sectors) {
 	this->sectors = std::move(sectors);
+}
+
+void DoomMap::setSsectors(std::string&& ssectors) {
+	this->ssectors = std::move(ssectors);
 }
 
 void DoomMap::setSidedefs(Sidedefs&& sidedefs) {

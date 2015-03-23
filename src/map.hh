@@ -115,19 +115,34 @@ public:
 };
 
 class DoomMap {
-	DoomThings things;
+	std::string blockmap;
 	DoomLinedefs linedefs;
-	Sidedefs sidedefs;
+	std::string nodes;
+	std::string reject;
+	std::string segs;
 	Sectors sectors;
+	std::string ssectors;
+	Sidedefs sidedefs;
+	DoomThings things;
 	Vertexes vertexes;
 public:
+	std::string& getBlockmap();
 	DoomLinedefs& getLinedefs();
+	std::string& getNodes();
+	std::string& getReject();
+	std::string& getSegs();
 	Sectors& getSectors();
+	std::string& getSsectors();
 	Sidedefs& getSidedefs();
 	DoomThings& getThings();
 	Vertexes& getVertexes();
+	void setBlockmap(std::string&& blockmap);
 	void setLinedefs(DoomLinedefs&& linedefs);
+	void setNodes(std::string&& nodes);
+	void setReject(std::string&& reject);
+	void setSegs(std::string&& segs);
 	void setSectors(Sectors&& sectors);
+	void setSsectors(std::string&& ssectors);
 	void setSidedefs(Sidedefs&& sidedefs);
 	void setThings(DoomThings&& things);
 	void setVertexes(Vertexes&& vertexes);
