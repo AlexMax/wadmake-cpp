@@ -1,3 +1,5 @@
+**This project is no longer maintained.  Please see [AlexMax/wadmake](https://github.com/AlexMax/wadmake) for the continuation of this project, written in Go.**
+
 WADmake
 =======
 
